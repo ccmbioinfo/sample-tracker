@@ -295,7 +295,10 @@ def get_samples_in_cohort(searchterm,searchvalue):
                 results = cohortbaseQuery.filter(Dataset.DatasetType==searchvalue).all()
 
     elif searchterm == 'assignedToSelect':
-        results = cohortbaseQuery.filter(Analysis.AssignedTo==searchvalue).all() 
+            if searchvalue == 'ALL':
+                results = cohortbaseQuery.all()
+            else:
+                results = cohortbaseQuery.filter(Analysis.AssignedTo==searchvalue).all() 
 
     elif searchterm == 'pipelineSelect':
         results = cohortbaseQuery.filter(Analysis.PipelineVersion==searchvalue).all()        

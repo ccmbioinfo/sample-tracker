@@ -53,25 +53,6 @@ class Cohort2Family(db.Model):
 	CohortID = db.Column(db.Integer, db.ForeignKey('cohort.CohortID',onupdate="cascade",ondelete="cascade"), nullable=False, primary_key = True)
 	FamilyID = db.Column(db.String(30), db.ForeignKey('family.FamilyID',onupdate="cascade",ondelete="cascade"), nullable=False, primary_key = True)
 
-class Analysis(db.Model):
-
-    AnalysisID = db.Column(db.String(100), primary_key = True)
-    DatasetID = db.Column(db.Integer, db.ForeignKey('dataset.DatasetID', onupdate="cascade",ondelete="cascade"), nullable=False)
-    PipelineVersion = db.Column(db.String(30))
-    ResultsDirectory = db.Column(db.Text)
-    ResultsBAM = db.Column(db.Text)
-    AssignedTo = db.Column(db.String(100), nullable=True)
-    analysisStatuses = db.relationship('AnalysisStatus', backref='analysis', lazy='dynamic')
-
-class AnalysisStatus(db.Model):
-    
-    __tablename__ = "analysisStatus"
-    AnalysisID = db.Column(db.String(100), db.ForeignKey('analysis.AnalysisID', onupdate="cascade",ondelete="cascade"), nullable=False, primary_key = True)
-    AnalysisStep = db.Column(db.String(45), nullable = False, primary_key = True)
-    UpdateDate = db.Column(db.DateTime, nullable = False)
-    UpdateUser = db.Column(db.Integer, db.ForeignKey('user.id', onupdate="cascade",ondelete="restrict"))
-    Notes = db.Column(db.Text)
-
 class Dataset(db.Model):
 
 	DatasetID = db.Column(db.Integer, primary_key = True)
@@ -103,6 +84,26 @@ class Uploaders(db.Model):
 	UploadCenter = db.Column(db.String(100), nullable=False)
 	UploadUser = db.Column(db.String(100), nullable=False)
 	uploaders = db.relationship('Dataset',backref='uploaders',lazy='dynamic')
+
+class Analysis(db.Model):
+
+    AnalysisID = db.Column(db.String(100), primary_key = True)
+    DatasetID = db.Column(db.Integer, db.ForeignKey('dataset.DatasetID', onupdate="cascade",ondelete="cascade"), nullable=False)
+    PipelineVersion = db.Column(db.String(30))
+    ResultsDirectory = db.Column(db.Text)
+    ResultsBAM = db.Column(db.Text)
+    AssignedTo = db.Column(db.String(100), nullable=True)
+    analysisStatuses = db.relationship('AnalysisStatus', backref='analysis', lazy='dynamic')
+
+class AnalysisStatus(db.Model):
+    
+    __tablename__ = "analysisStatus"
+    AnalysisID = db.Column(db.String(100), db.ForeignKey('analysis.AnalysisID', onupdate="cascade",ondelete="cascade"), nullable=False, primary_key = True)
+    AnalysisStep = db.Column(db.String(45), nullable = False, primary_key = True)
+    UpdateDate = db.Column(db.DateTime, nullable = False)
+    UpdateUser = db.Column(db.Integer, db.ForeignKey('user.id', onupdate="cascade",ondelete="restrict"))
+    Notes = db.Column(db.Text)
+
 
 @login.user_loader
 def load_user(id):
