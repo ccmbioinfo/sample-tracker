@@ -26,9 +26,8 @@ def checkSampleRecordValues(sampleRow):
     for field in reqFields:
         if field not in sampleRow:
             return False
-    if re.search(r"[^a-zA-Z.0-9_-]",sampleRow['FamilyID']) or re.search(r"[^a-z.A-Z0-9_-]",sampleRow['SampleName']): 
+    if re.search(r"[^a-zA-Z.0-9_-]",str(sampleRow['FamilyID'])) or re.search(r"[^a-z.A-Z0-9_-]",str(sampleRow['SampleName'])): 
         return False
-     
     return True
         
 def checkSampleUpdateRecordValues(sampleRow):
