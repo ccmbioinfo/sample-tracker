@@ -520,7 +520,7 @@ export default class ManualInputTable extends React.Component {
             You can also drag and drop an excel (.xls or .xlsx) file onto the table above. Use this <a href='/files/uploadTemplate' download='upload_template.xls'>template</a> to fill in data for upload (<b>Warning</b>: Dropping a file onto the table will clear any existing data in the table).<br/>
                 <b>Instructions</b>
                 <ol>
-                    <li><b> PhenomeCentralID, FamilyID, Sample name, Dataset type </b> are required columns. </li>
+                    <li><b> FamilyID, Sample name, Dataset type </b> are required columns. </li>
                     <li><b> Sample ID</b> column is auto populated. Format of Sample ID is Family ID_Sample name.</li>
                     <li> Samples with no Cohort name will be entered into a default cohort named '<b>Global</b>'.</li>
                     <li> Once entered, information cant be updated, so please double check the data before inserting  it into the database.</li>

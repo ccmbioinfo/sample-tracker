@@ -2,11 +2,12 @@ from flask import send_file,render_template, flash, redirect, url_for, request
 from flask_login import login_user, logout_user, current_user, login_required
 from app import app,db
 from app.models import *
-from app.loginform import LoginForm
+from app.loginform import LoginForm, PasswordResetForm
 from sqlalchemy.sql import func
 from sqlalchemy import update
 from app.non_route_functions import *
 from flask_wtf.csrf import CSRFError
+from werkzeug.security import generate_password_hash 
 
 import time
 import datetime as dt
@@ -29,6 +30,31 @@ def login():
         return redirect(url_for('index'))
 
     return render_template('Login.html',title="Login",error=0, form=form)
+
+@app.route('/resetpassword', methods=('GET','POST')) 
+def resetpassword():
+    errorStr = 0
+    successStr = 0
+    prForm = PasswordResetForm()
+    if prForm.validate_on_submit():
+        user_obj = User.query.filter_by(username=prForm.username.data)
+        user = user_obj.first()
+        if user is None or not user.check_password(prForm.oldpassword.data):
+            errorStr ="Incorrect Username/old password."
+        else:
+            if prForm.newpassword.data!=prForm.confirmpassword.data:
+                errorStr="New passwords dont match!"
+            elif prForm.newpassword.data==prForm.oldpassword.data:
+                errorStr="Old password and new passwords are the same!"
+            else:
+                try:
+                    user_obj.update({'password':generate_password_hash(prForm.newpassword.data)})
+                    db.session.commit()
+                    successStr ="Password updated successfully!"     
+                except:
+                    db.session.rollback()
+                    errorStr="Cannot update password! Contact administrator."
+    return render_template('PasswordReset.html',title="PasswordReset",error=errorStr,success=successStr,form=prForm)
 
 @app.route("/SearchBox")
 @app.route("/CohortStats")
@@ -243,7 +269,7 @@ def get_upload_user_samples(CohortName):
         if row.Dataset.DatasetID in addedDatasets:
             modifyIndex = addedDatasets.index(row.Dataset.DatasetID)
         if modifyIndex == -1:
-            samples.append({'FamilyID': row.Family.FamilyID, 'SampleName': row.Sample.SampleName,'PhenomeCentralSampleID': row.Sample.PhenomeCentralSampleID,'InputFile': row.Dataset.InputFile, 'id':row.Dataset.DatasetID, 'DatasetType':row.Dataset.DatasetType,'UploadDate': row.Dataset.UploadDate, 'AnalysisID': row.AnalysisStatus.AnalysisID,'AnalysisDate': row.AnalysisStatus.UpdateDate, 'Status': row.Dataset.SolvedStatus, 'AnalysisStatus': row.AnalysisStatus.AnalysisStep, 'InputFile': row.Dataset.InputFile, 'ResultsDirectory': row.Analysis.ResultsDirectory, 'ResultsBAM': row.Analysis.ResultsBAM});
+            samples.append({'FamilyID': row.Family.FamilyID, 'SampleName': row.Sample.SampleName,'SampleID': row.Sample.SampleID, 'PhenomeCentralSampleID': row.Sample.PhenomeCentralSampleID,'InputFile': row.Dataset.InputFile, 'id':row.Dataset.DatasetID, 'DatasetType':row.Dataset.DatasetType,'UploadDate': row.Dataset.UploadDate, 'AnalysisID': row.AnalysisStatus.AnalysisID,'AnalysisDate': row.AnalysisStatus.UpdateDate, 'Status': row.Dataset.SolvedStatus, 'AnalysisStatus': row.AnalysisStatus.AnalysisStep, 'InputFile': row.Dataset.InputFile, 'ResultsDirectory': row.Analysis.ResultsDirectory, 'ResultsBAM': row.Analysis.ResultsBAM});
             addedDatasets.append(row.Dataset.DatasetID)
         else:
             if row.AnalysisStatus.UpdateDate > samples[modifyIndex]['AnalysisDate']:

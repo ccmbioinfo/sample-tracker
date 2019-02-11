@@ -39,7 +39,9 @@
 							Login
 						</button>
 					</div>
-
+                    <div style="margin-top:25px;">
+                            <a href="http://{{request.environ['SERVER_NAME'] }}/resetpassword">Click here to reset password</a>
+                    </div>
 				</form>
 				
 				<div>
@@ -47,9 +49,7 @@
 						<br/><br/>
 						<font style='color:red;' class="txt1 p-b-11">{{error}}</font>
 						{% endif %}
-
-
-						</div>
+				</div>
 			</div>
 		</div>
 	</div>
