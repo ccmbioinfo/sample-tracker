@@ -260,8 +260,6 @@ def checkIFSampleExists(SampleID):
 def get_upload_user_samples(CohortName):
 
     samples = []
-    #subQuery =  db.session.query(Uploaders).filter(Uploaders.UploadUser==current_user.username).subquery()
-    #results = db.session.query(Cohort,Cohort2Family,Family,Sample,Dataset,Uploaders,Analysis,AnalysisStatus).join(Cohort2Family).join(Family).join(Sample).join(Dataset).join(Uploaders,Analysis).join(AnalysisStatus).filter(Cohort.CohortName==CohortName).filter(Uploaders.UploadCenter==subQuery.c.UploadCenter).order_by(Dataset.UploadDate.desc()).all()
     results = db.session.query(Cohort,Cohort2Family,Family,Sample,Dataset,Uploaders,Analysis,AnalysisStatus).join(Cohort2Family).join(Family).join(Sample).join(Dataset).join(Uploaders,Analysis).join(AnalysisStatus).filter(Cohort.CohortName==CohortName).order_by(Dataset.UploadDate.desc()).all()
     addedDatasets = []
     for row in results:
@@ -269,11 +267,12 @@ def get_upload_user_samples(CohortName):
         if row.Dataset.DatasetID in addedDatasets:
             modifyIndex = addedDatasets.index(row.Dataset.DatasetID)
         if modifyIndex == -1:
-            samples.append({'FamilyID': row.Family.FamilyID, 'SampleName': row.Sample.SampleName,'SampleID': row.Sample.SampleID, 'PhenomeCentralSampleID': row.Sample.PhenomeCentralSampleID,'InputFile': row.Dataset.InputFile, 'id':row.Dataset.DatasetID, 'DatasetType':row.Dataset.DatasetType,'UploadDate': row.Dataset.UploadDate, 'AnalysisID': row.AnalysisStatus.AnalysisID,'AnalysisDate': row.AnalysisStatus.UpdateDate, 'Status': row.Dataset.SolvedStatus, 'AnalysisStatus': row.AnalysisStatus.AnalysisStep, 'InputFile': row.Dataset.InputFile, 'ResultsDirectory': row.Analysis.ResultsDirectory, 'ResultsBAM': row.Analysis.ResultsBAM});
+            samples.append({'FamilyID': row.Family.FamilyID, 'SampleName': row.Sample.SampleName,'SampleID': row.Sample.SampleID, 'PhenomeCentralSampleID': row.Sample.PhenomeCentralSampleID,'InputFile': row.Dataset.InputFile, 'id':row.Dataset.DatasetID, 'DatasetType':row.Dataset.DatasetType,'UploadDate': row.Dataset.UploadDate, 'AnalysisID': row.AnalysisStatus.AnalysisID,'AnalysisDate': row.AnalysisStatus.UpdateDate,'AssignedTo': row.Analysis.AssignedTo, 'SolvedStatus': row.Dataset.SolvedStatus,'Notes': row.Dataset.Notes,'AnalysisStatus': row.AnalysisStatus.AnalysisStep, 'InputFile': row.Dataset.InputFile, 'ResultsDirectory': row.Analysis.ResultsDirectory, 'ResultsBAM': row.Analysis.ResultsBAM});
             addedDatasets.append(row.Dataset.DatasetID)
         else:
             if row.AnalysisStatus.UpdateDate > samples[modifyIndex]['AnalysisDate']:
                 samples[modifyIndex]['AnalysisID'] = row.AnalysisStatus.AnalysisID
+                samples[modifyIndex]['AssignedTo'] = row.Analysis.AssignedTo
                 samples[modifyIndex]['AnalysisStatus'] = row.AnalysisStatus.AnalysisStep
                 samples[modifyIndex]['AnalysisDate'] = row.AnalysisStatus.UpdateDate
     return json.dumps(samples,default=str)
@@ -489,7 +488,8 @@ def get_cohort_stats():
 
         tmpObj['Processed'] = int(tmpObj['Samples']) - len(tmpObj['pendingSamples'])    
         cohorts.append(tmpObj)
-
+    
+    cohorts.sort(key=lambda c: c['CohortName'], reverse=True) 
     return json.dumps(cohorts,default=str)
 
 @app.route('/requestReanalysis',methods=["POST"])
@@ -585,9 +585,9 @@ def updateAnalysisStatus():
 
         return json.dumps(retStr,default=str)
 
-@app.route('/updateSolvedStatus',methods=["POST"])
+@app.route('/updateDatasetFields',methods=["POST"])
 @login_required
-def updateSolvedStatus():
+def updateDatasetFields():
 
         postObj = {}
         retStr = {'Status':'Error'}
@@ -601,12 +601,12 @@ def updateSolvedStatus():
             return  json.dumps(retStr,default=str) 
         # check for postObj updateTo values in allowed set
         updateSuccess = 1
-        if 'datasets' in postObj and 'updateTo' in postObj:
+        if 'datasets' in postObj and 'updateTo' in postObj and 'field' in postObj:
 
             for dataSet in postObj['datasets']:
                 if 'datasetID' in dataSet:
                     try:
-                        db.session.query(Dataset).filter(Dataset.DatasetID==dataSet['datasetID']).update({'SolvedStatus': postObj['updateTo']})
+                        db.session.query(Dataset).filter(Dataset.DatasetID==dataSet['datasetID']).update({postObj['field']: postObj['updateTo']})
                     except:
                         updateSuccess = 0
                         break
@@ -808,9 +808,9 @@ def updateSampleStatus():
         db.session.rollback()
     return json.dumps({"Status": "Error"},default=str)
 
-@app.route('/updateAssignedUser',methods=["POST"])
+@app.route('/updateAnalysisFields',methods=["POST"])
 @login_required
-def updateAssignedUser():
+def updateAnalysisFields():
     
     sampleObj = {}
     retStr= {'Status': 'Error'}
@@ -823,12 +823,47 @@ def updateAssignedUser():
         return json.dumps(retStr,default=str)
 
     success = 1
-    if 'datasets' in sampleObj and 'updateTo' in sampleObj:
+    if 'datasets' in sampleObj and 'updateTo' in sampleObj and 'field' in sampleObj:
         for record in sampleObj['datasets']:      
            
             try:
                 if 'analysisID' in record:
-                    db.session.query(Analysis).filter(Analysis.AnalysisID==record['analysisID']).update({'AssignedTo': sampleObj['updateTo']})
+                    db.session.query(Analysis).filter(Analysis.AnalysisID==record['analysisID']).update({sampleObj['field']: sampleObj['updateTo']})
+            except:
+                success = 0
+                break       
+    if success  == 1:
+        #commit transaction here.
+        try:
+            db.session.commit()
+            return json.dumps({"Status":"Success"},default=str)
+        except:
+            db.session.rollback()
+    else:
+        db.session.rollback()
+    return json.dumps({"Status": "Error"},default=str)
+
+@app.route('/updateSampleFields',methods=["POST"])
+@login_required
+def updateSampleFields():
+    
+    sampleObj = {}
+    retStr= {'Status': 'Error'}
+    if request.method == 'POST':
+        sampleObj = request.get_json()
+    else:
+        return json.dumps(retStr,default=str)
+
+    if current_user.accessLevel.value != 'Admin':
+        return json.dumps(retStr,default=str)
+
+    success = 1
+    if 'samples' in sampleObj and 'updateTo' in sampleObj and 'field' in sampleObj:
+        for record in sampleObj['samples']:      
+           
+            try:
+                if 'sampleID' in record:
+                    db.session.query(Sample).filter(Sample.SampleID==record['sampleID']).update({sampleObj['field']: sampleObj['updateTo']})
             except:
                 success = 0
                 break       

@@ -1,6 +1,6 @@
 import React from "react";
 import { Image,PanelGroup, Radio, Grid, Row, Panel, Form, Button, FormGroup,FormControl,ControlLabel,Checkbox,Col} from 'react-bootstrap';
-import {UPDATE_SOLVED_STATUS} from './Url.jsx';
+import {UPDATE_DATASET_FIELDS} from './Url.jsx';
 import {SOLVED_STATUSES} from './Constants';
 
 export default class SolvedStatusModal extends React.Component {
@@ -27,7 +27,7 @@ export default class SolvedStatusModal extends React.Component {
     updateSolvedStatus(){
 
 
-        fetch(UPDATE_SOLVED_STATUS,{
+        fetch(UPDATE_DATASET_FIELDS,{
 
                     method: "post",
                     headers: {
@@ -36,7 +36,7 @@ export default class SolvedStatusModal extends React.Component {
                         'Content-Type': 'application/json',
                         'X-CSRFToken': document.getElementById('csrf_token').value
                     },
-                    body: JSON.stringify({"datasets":this.props.selectedSamples,"updateTo":this.state.selectedDropDownStatus})
+                    body: JSON.stringify({"datasets":this.props.selectedSamples,"updateTo":this.state.selectedDropDownStatus, "field": "SolvedStatus"})
              })
             .then(response =>response.json())
             .then(data => alert('Updated!')); 
