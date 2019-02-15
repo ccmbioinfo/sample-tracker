@@ -45,16 +45,17 @@ export default class Layout extends React.Component{
   					</Navbar.Brand>
   				</Navbar.Header>
   				<Nav>
-    					<LinkContainer to="/SearchBox">
-    						<NavItem eventKey={1} >
-      							Search Samples
-    						</NavItem>
-    					</LinkContainer>
+                    
                         <LinkContainer to="/CohortStats">
-    					    <NavItem eventKey={2}>
+    					    <NavItem eventKey={1}>
       						    Dashboard
     					    </NavItem>
                         </LinkContainer>
+    					<LinkContainer to="/SearchBox">
+    						<NavItem eventKey={2} >
+      							Search Samples
+    						</NavItem>
+    					</LinkContainer>
                         <LinkContainer to="/SampleUploader">
     					    <NavItem eventKey={3}>
       						    Upload new samples
@@ -71,7 +72,7 @@ export default class Layout extends React.Component{
             <input type='hidden' id='csrf_token' value={this.props.csrfValue} />
 			<div>
 				<Route exact path="/index" render={() => (
-					<Redirect to="/SearchBox"/>
+					<Redirect to="/CohortStats"/>
      				)}/>
 				<Route path="/SearchBox" component={SearchBox}/>
                 <Route path = "/CohortStats" component={CohortStats}/>

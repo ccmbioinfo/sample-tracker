@@ -1,6 +1,6 @@
 import React from "react";
 import { Image,PanelGroup, Radio, Grid, Row, Panel, Form, Button, FormGroup,FormControl,ControlLabel,Checkbox,Col} from 'react-bootstrap';
-import {UPDATE_ASSIGNED_USER,FETCH_USER_LIST} from './Url.jsx';
+import {UPDATE_ANALYSIS_FIELDS,FETCH_USER_LIST} from './Url.jsx';
 
 export default class AssignToModal extends React.Component {
 
@@ -34,7 +34,7 @@ export default class AssignToModal extends React.Component {
     updateAssignedUser(){
 
         console.log(this.props.selectedSamples);
-        fetch(UPDATE_ASSIGNED_USER,{
+        fetch(UPDATE_ANALYSIS_FIELDS,{
 
                     method: "post",
                     headers: {
@@ -43,7 +43,7 @@ export default class AssignToModal extends React.Component {
                         'Content-Type': 'application/json',
                         'X-CSRFToken': document.getElementById('csrf_token').value
                     },
-                    body: JSON.stringify({"datasets":this.props.selectedSamples,"updateTo":this.state.selectedDropDownStatus})
+                    body: JSON.stringify({"datasets":this.props.selectedSamples,"updateTo":this.state.selectedDropDownStatus, "field": "AssignedTo" })
              })
             .then(response =>response.json())
             .then(data => alert('Assigned samples!')); 
