@@ -45,6 +45,7 @@ export default class CohortTable extends React.Component{
                     {dataField: 'SampleID', text:'Sample ID',sort: true, editable: false, filter: textFilter(), headerStyle: (colum, colIndex) => {return { width: '150px', textAlign: 'center' }; }},
                     {dataField: 'AssignedTo', text:'Assigned to',sort: true, editable: true, filter: textFilter(), headerStyle: (colum, colIndex) => {return { width: '150px', textAlign: 'center' }; }, editor: {type: Type.SELECT, options: this.state.userList}},
                     {dataField: 'DatasetType', text:"Dataset",sort: true, editable: false, filter: textFilter(), headerStyle: (colum, colIndex) => {return { width: '150px', textAlign: 'center' }; }},
+                    {dataField: 'TissueType', text:"Tissue",sort: true, editable: true, filter: textFilter(), headerStyle: (colum, colIndex) => {return { width: '150px', textAlign: 'center' }; },editor: {type: Type.TEXT}},
                     {dataField: 'UploadDate', text: 'Upload Date', sort:true, editable: false, headerStyle: (colum, colIndex) => {return { width: '150px', textAlign: 'center' }; }},
                     {dataField: 'SolvedStatus',text: 'Solved?', sort: true, filter: selectFilter({ options: solved_status_for_filters }),headerStyle: (colum, colIndex) => {return { width: '150px', textAlign: 'center' }; }, editor: {type: Type.SELECT, options: solved_status_for_edits}},
                     {dataField: 'AnalysisStatus', text: 'Analysis Status',sort: true, filter: selectFilter({ options: analysis_status_for_filters }), headerStyle: (colum, colIndex) => {return { width: '150px', textAlign: 'center' }; }, editor: {type: Type.SELECT, options: analysis_status_for_edits} },
@@ -67,7 +68,7 @@ export default class CohortTable extends React.Component{
                                                 mode: 'dbclick',
                                                 blurToSave: true,
                                                 afterSaveCell: (oldValue, newValue, row, column) => {
-                                                                                            if(newValue != oldValue){
+                                                                                            if(newValue != oldValue && newValue.length >0){
 
                                                                                                 let UPDATE_URL = '';    
                                                                                                 let updateObj = { 'updateTo':newValue };
@@ -88,7 +89,7 @@ export default class CohortTable extends React.Component{
                                                                                                         updateObj['field'] = column.dataField;          
                                                                                                         UPDATE_URL = UPDATE_ANALYSIS_FIELDS; 
                                                                                                  }
-                                                                                                else if(column.dataField == 'PhenomeCentralSampleID'){
+                                                                                                else if(column.dataField == 'PhenomeCentralSampleID' || column.dataField == "TissueType"){
 
                                                                                                     updateObj['samples'] = [{'sampleID': row.SampleID}];
                                                                                                     updateObj['field'] = column.dataField;

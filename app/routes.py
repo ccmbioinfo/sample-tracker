@@ -260,14 +260,14 @@ def checkIFSampleExists(SampleID):
 def get_upload_user_samples(CohortName):
 
     samples = []
-    results = db.session.query(Cohort,Cohort2Family,Family,Sample,Dataset,Uploaders,Analysis,AnalysisStatus).join(Cohort2Family).join(Family).join(Sample).join(Dataset).join(Uploaders,Analysis).join(AnalysisStatus).filter(Cohort.CohortName==CohortName).order_by(Dataset.UploadDate.desc()).all()
+    results = db.session.query(Family,Sample,Dataset,Cohort,Uploaders,Analysis,AnalysisStatus).join(Sample).join(Dataset).join(Cohort,Uploaders,Analysis).join(AnalysisStatus).filter(Cohort.CohortName==CohortName).order_by(Dataset.UploadDate.desc()).all()
     addedDatasets = []
     for row in results:
         modifyIndex = -1
         if row.Dataset.DatasetID in addedDatasets:
             modifyIndex = addedDatasets.index(row.Dataset.DatasetID)
         if modifyIndex == -1:
-            samples.append({'FamilyID': row.Family.FamilyID, 'SampleName': row.Sample.SampleName,'SampleID': row.Sample.SampleID, 'PhenomeCentralSampleID': row.Sample.PhenomeCentralSampleID,'InputFile': row.Dataset.InputFile, 'id':row.Dataset.DatasetID, 'DatasetType':row.Dataset.DatasetType,'UploadDate': row.Dataset.UploadDate, 'AnalysisID': row.AnalysisStatus.AnalysisID,'AnalysisDate': row.AnalysisStatus.UpdateDate,'AssignedTo': row.Analysis.AssignedTo, 'SolvedStatus': row.Dataset.SolvedStatus,'Notes': row.Dataset.Notes,'AnalysisStatus': row.AnalysisStatus.AnalysisStep, 'InputFile': row.Dataset.InputFile, 'ResultsDirectory': row.Analysis.ResultsDirectory, 'ResultsBAM': row.Analysis.ResultsBAM});
+            samples.append({'FamilyID': row.Family.FamilyID, 'SampleName': row.Sample.SampleName,'SampleID': row.Sample.SampleID,'TissueType': row.Sample.TissueType, 'PhenomeCentralSampleID': row.Sample.PhenomeCentralSampleID,'InputFile': row.Dataset.InputFile, 'id':row.Dataset.DatasetID, 'DatasetType':row.Dataset.DatasetType,'UploadDate': row.Dataset.UploadDate, 'AnalysisID': row.AnalysisStatus.AnalysisID,'AnalysisDate': row.AnalysisStatus.UpdateDate,'AssignedTo': row.Analysis.AssignedTo, 'SolvedStatus': row.Dataset.SolvedStatus,'Notes': row.Dataset.Notes,'AnalysisStatus': row.AnalysisStatus.AnalysisStep, 'InputFile': row.Dataset.InputFile, 'ResultsDirectory': row.Analysis.ResultsDirectory, 'ResultsBAM': row.Analysis.ResultsBAM});
             addedDatasets.append(row.Dataset.DatasetID)
         else:
             if row.AnalysisStatus.UpdateDate > samples[modifyIndex]['AnalysisDate']:
@@ -285,8 +285,7 @@ def get_samples_in_cohort(searchterm,searchvalue):
     results = []
 
     subQuery =  db.session.query(Uploaders).filter(Uploaders.UploadUser==current_user.username).subquery()
-    cohortbaseQuery = db.session.query(Cohort,Cohort2Family,Family,Sample,Dataset,Dataset2Cohort,Uploaders,Analysis,AnalysisStatus).join(Cohort2Family).join(Family).join(Sample).join(Dataset).join(Dataset2Cohort,Uploaders,Analysis).join(AnalysisStatus)
-
+    cohortbaseQuery = db.session.query(Family,Sample,Dataset,Cohort,Uploaders,Analysis,AnalysisStatus).join(Sample).join(Dataset).join(Cohort,Uploaders,Analysis).join(AnalysisStatus)
     if current_user.accessLevel.value == 'Regular':
         cohortbaseQuery = cohortbaseQuery.filter(Uploaders.UploadCenter==subQuery.c.UploadCenter)
 
@@ -294,12 +293,7 @@ def get_samples_in_cohort(searchterm,searchvalue):
         if searchvalue == 'ALL':
             results = cohortbaseQuery.all()
         else:
-            cohortID = -1
-            cohortIDResult =db.session.query(Cohort).filter(Cohort.CohortName==searchvalue).all()
-            for cohortResult in cohortIDResult:
-                cohortID=cohortResult.CohortID
- 
-            results = cohortbaseQuery.filter(Cohort.CohortName==searchvalue).filter(Dataset2Cohort.CohortID==cohortID).all()
+            results = cohortbaseQuery.filter(Cohort.CohortName==searchvalue).all()
 
     elif searchterm == 'familySelect':
         for family_id in searchvalue.split(','):
@@ -318,6 +312,8 @@ def get_samples_in_cohort(searchterm,searchvalue):
                 results = cohortbaseQuery.all()
             else:
                 results = cohortbaseQuery.filter(Dataset.DatasetType==searchvalue).all()
+    elif searchterm == 'tissueTypeSelect':
+        results = cohortbaseQuery.filter(Sample.TissueType==searchvalue).all()
 
     elif searchterm == 'assignedToSelect':
             if searchvalue == 'ALL':
@@ -386,8 +382,8 @@ def get_samples_in_cohort_by_date(dateType,startDate,endDate):
         endDate = dt.datetime.utcfromtimestamp(time.time()).strftime("%Y-%m-%d")
 
     subQuery =  db.session.query(Uploaders).filter(Uploaders.UploadUser==current_user.username).subquery()
-    cohortbaseQuery = db.session.query(Cohort,Cohort2Family,Family,Sample,Dataset,Dataset2Cohort,Uploaders,Analysis,AnalysisStatus).join(Cohort2Family).join(Family).join(Sample).join(Dataset).join(Dataset2Cohort,Uploaders,Analysis).join(AnalysisStatus)
-    
+    #cohortbaseQuery = db.session.query(Cohort,Cohort2Family,Family,Sample,Dataset,Dataset2Cohort,Uploaders,Analysis,AnalysisStatus).join(Cohort2Family).join(Family).join(Sample).join(Dataset).join(Dataset2Cohort,Uploaders,Analysis).join(AnalysisStatus)
+    cohortbaseQuery = db.session.query(Family,Sample,Dataset,Cohort,Uploaders,Analysis,AnalysisStatus).join(Sample).join(Dataset).join(Cohort,Uploaders,Analysis).join(AnalysisStatus)
 
     if current_user.accessLevel.value == 'Regular':
         cohortbaseQuery = cohortbaseQuery.filter(Uploaders.UploadCenter==subQuery.c.UploadCenter)
@@ -478,10 +474,10 @@ def get_cohort_stats():
     for cohortID,cohortName in fetch_cohorts(current_user.username,current_user.accessLevel.value).items(): 
         tmpObj = {}
         tmpObj['CohortName'] = cohortName
-        tmpObj['Families'] = db.session.query(Cohort,Cohort2Family).join(Cohort2Family).filter(Cohort.CohortName==cohortName).count() 
-        tmpObj['Samples'] = db.session.query(Cohort,Cohort2Family,Family,Sample).join(Cohort2Family).join(Family).join(Sample).filter(Cohort.CohortName==cohortName).count()
+        tmpObj['Families'] = db.session.query(Family).join(Sample).join(Dataset).join(Cohort).filter(Cohort.CohortName==cohortName).distinct().count()
+        tmpObj['Samples'] = db.session.query(Dataset.SampleID).join(Cohort).filter(Cohort.CohortName==cohortName).distinct().count()
         tmpObj['pendingSamples']=[]
-        pendingResults = db.session.query(Dataset2Cohort,Dataset,Analysis).join(Dataset).join(Analysis).filter(Dataset2Cohort.CohortID==cohortID).filter(Analysis.ResultsDirectory==None).all()
+        pendingResults = db.session.query(Dataset,Analysis).join(Analysis).filter(Dataset.ActiveCohort==cohortID).filter(Analysis.ResultsDirectory==None).all()
         for result in pendingResults:
             if result.Dataset.SampleID not in tmpObj['pendingSamples']:
                 tmpObj['pendingSamples'].append(result.Dataset.SampleID)
@@ -629,10 +625,9 @@ def updateDatasetFields():
 def addDatasets2Cohort():
 
     postObj= {}
-    retStr= {'Status': 'Error adding samples to cohort. Please contact administrator!'}
+    retStr= {'Status': 'Error moving samples to a different cohort. Please contact administrator!'}
     if request.method == 'POST':
         postObj = request.get_json()
-
     else:
         return json.dumps(retStr,default=str)
 
@@ -653,64 +648,36 @@ def addDatasets2Cohort():
         else:
             return json.dumps({"Status": "Cohort name needs to be atleast 5 characters."},default="str")
 
-    newFamilyCohorts = []
-    updateSuccess = 1
+    if newOrUpdate == 'new':
+        try:
+            NewCohort = Cohort(CohortName=postObj['add2NewCohort'])
+            db.session.add(NewCohort)
+            db.session.commit()
+        except:
+            db.session.rollback()
+            return json.dumps(retStr,default=str)
+        cohortID = NewCohort.CohortID         
 
+    if cohortID == -1:
+        return json.dumps(retStr,default=str)
+
+    updateSuccess = 1
     if 'datasets' in postObj:
-            
-        if newOrUpdate == 'new': 
-            try:
-                NewCohort = Cohort(CohortName=postObj['add2NewCohort'])
-            except:
-                db.session.rollback()
-                return json.dumps(retStr,default=str)          
         for dataset in postObj['datasets']:
             if 'datasetID' in dataset:
-                if newOrUpdate == 'new':
-                    try:
-                        NewCohort.cohorts2Data.append(Dataset2Cohort(DatasetID=dataset['datasetID']))           
-                    except:
-                        updateSuccess=0
-                        break
-                else:
-                    checkDatasetCohortQuery = Dataset2Cohort.query.filter(Dataset2Cohort.DatasetID==dataset['datasetID']).filter(Dataset2Cohort.CohortID==cohortID)
-                    if checkDatasetCohortQuery.count() == 0:
-                        try:
-                            db.session.add(Dataset2Cohort(DatasetID=dataset['datasetID'],CohortID=cohortID))
-                        except:       
-                            updateSuccess=0
-                            break
-
-            if 'FamilyID' in dataset:
-                if dataset['FamilyID'] not in newFamilyCohorts:
-                    newFamilyCohorts.append(dataset['FamilyID'])
-    
-        for famID in newFamilyCohorts:
-            if newOrUpdate == 'new':
+                checkDatasetCohortQuery = Dataset2Cohort.query.filter(Dataset2Cohort.DatasetID==dataset['datasetID']).filter(Dataset2Cohort.CohortID==cohortID)
                 try:
-                    NewCohort.cohorts.append(Cohort2Family(FamilyID=famID))
-                except:
+                    if checkDatasetCohortQuery.count() == 0:
+                        db.session.add(Dataset2Cohort(DatasetID=dataset['datasetID'],CohortID=cohortID))
+                    db.session.query(Dataset).filter(Dataset.DatasetID==dataset['datasetID']).update({'ActiveCohort':cohortID})
+                except:       
                     updateSuccess=0
                     break
-            else:
-                checkFamilyCohortQuery = Cohort2Family.query.filter(Cohort2Family.CohortID==cohortID).filter(Cohort2Family.FamilyID==famID)
-                if checkFamilyCohortQuery.count() == 0:
-                    try:
-                        db.session.add(Cohort2Family(CohortID=cohortID,FamilyID=famID))
-                    except:
-                        updateSuccess=0
-                        break
-        if newOrUpdate == 'new':
-            try:
-                db.session.add(NewCohort)
-            except:
-                updateSuccess=0
-                
+
         if updateSuccess  == 1:
-            #commit transaction here.
             try:
                 db.session.commit()
-                return json.dumps({"Status":"Successfully added selected samples to cohort."},default=str)
+                return json.dumps({"Status":"Successfully moved selected samples to cohort."},default=str)
             except:
                 db.session.rollback()
         else:
@@ -760,14 +727,11 @@ def insertNewSamplesintoDatabase():
                 success = 0
                 break
     if success  == 1:
-        #commit transaction here.
         try:
             db.session.commit()
             return json.dumps({"Status":"Success"},default=str)
         except:
             db.session.rollback()
-    else:
-        db.session.rollback()
     return json.dumps({"Status": "Error"},default=str)
 
 @app.route('/updateSampleStatus',methods=["POST"])

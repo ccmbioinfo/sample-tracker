@@ -493,6 +493,7 @@ export default class ManualInputTable extends React.Component {
       {key: 'Gender', name: 'Gender',editable:true,resizable:true,width:100, editor: <DropDownEditor options={Genders} />, visible: true},
       { key: 'SampleType', name: 'Family information',editable:true,resizable:true,width:150, visible: true, editor: <DropDownEditor options={FamilyDropDown} /> },
       { key: 'DatasetType', name: 'Dataset type', editable:true,resizable:true,width:150, visible: true, editor: <DropDownEditor options={DATASET_TYPES} /> },
+      { key: 'TissueType', name: 'Tissue type',editable:true,resizable:true,width:150, visible: true },
       { key: 'CohortName', name: 'Cohort name', editable:true,resizable:true,width:250, visible: true, warnValues:this.state.warnValues, formatter: <FieldFormatter />},
       { key: 'RunID', name: 'Run ID',editable:true,resizable:true,width:100, visible: true },
       { key: 'Notes', name: 'Notes',editable:true,resizable:true,width:this.state.accessLevel == 'Admin' ? 150:400, visible: true },

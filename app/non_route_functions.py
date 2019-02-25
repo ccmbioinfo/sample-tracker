@@ -87,13 +87,18 @@ def insertSampleID(**sampleRow):
     gender = None
     sampleType = None
     PCID = None
+    tissueType = None
+
     if 'Gender' in sampleRow:
         gender = sampleRow['Gender']
     if 'SampleType' in sampleRow:
         sampleType = sampleRow['SampleType']
     if 'PhenomeCentralSampleID' in sampleRow:
         PCID = sampleRow['PhenomeCentralSampleID']
-    newSample = Sample(SampleID=sampleRow['SampleID'], SampleName=sampleRow['SampleName'], Gender=gender, FamilyID=sampleRow['FamilyID'], SampleType=sampleType,PhenomeCentralSampleID=PCID)
+    if 'TissueType' in sampleRow:
+        tissueType = sampleRow['TissueType']
+    
+    newSample = Sample(SampleID=sampleRow['SampleID'], SampleName=sampleRow['SampleName'], Gender=gender, FamilyID=sampleRow['FamilyID'], SampleType=sampleType,PhenomeCentralSampleID=PCID, TissueType=tissueType)
     db.session.add(newSample)
 
 def CohortIDExists(cohortName):
@@ -109,7 +114,6 @@ def addDatasetandCohortInformation(**sampleRow):
 
     newCohort = None
     newDataset2CohortID = None
-    newCohort2Family = None
     uploadID = -1
 
     sampleRow['uploadDate'] = dt.datetime.now().strftime('%Y-%m-%d')
@@ -129,23 +133,20 @@ def addDatasetandCohortInformation(**sampleRow):
             uploadID = UploaderResult.UploadID
 
     analysisID = sampleRow['SampleID']+"_"+sampleRow['DatasetType']+"_"+sampleRow['uploadDate']
-        
+    
+    newDataset = None    
     if sampleRow['cohortID'] == -1:
         # if the cohort name doesnt exist - add row to Cohort and Dataset2Cohort table
         newCohort = Cohort(CohortName=sampleRow['CohortName'])
         newDataset2CohortID=Dataset2Cohort()
-        newCohort2Family=Cohort2Family(FamilyID=sampleRow['FamilyID'])
         newCohort.cohorts2Data.append(newDataset2CohortID)
-        newCohort.cohorts.append(newCohort2Family)
+        newDataset = Dataset(DatasetID=None,SampleID=sampleRow['SampleID'],UploadDate=sampleRow['uploadDate'],UploadStatus='Complete',UploadID=uploadID,DatasetType=sampleRow['DatasetType'],SolvedStatus='Unsolved',RunID=sampleRow['RunID'],Notes=sampleRow['Notes'])
+        newCohort.cohorts2Dataset.append(newDataset)
     else:
         # if cohortID exists already
         newDataset2CohortID = Dataset2Cohort(CohortID=sampleRow['cohortID'])
-        checkCohort2Family = db.session.query(Cohort2Family).filter(Cohort2Family.CohortID==sampleRow['cohortID']).filter(Cohort2Family.FamilyID==sampleRow['FamilyID']).one_or_none()
- 
-        if checkCohort2Family is None:
-            newCohort2Family = Cohort2Family(CohortID=sampleRow['cohortID'],FamilyID=sampleRow['FamilyID'])
+        newDataset = Dataset(DatasetID=None,SampleID=sampleRow['SampleID'],UploadDate=sampleRow['uploadDate'],UploadStatus='Complete',UploadID=uploadID,DatasetType=sampleRow['DatasetType'],SolvedStatus='Unsolved',RunID=sampleRow['RunID'],Notes=sampleRow['Notes'],ActiveCohort=sampleRow['cohortID'])
     
-    newDataset = Dataset(DatasetID=None,SampleID=sampleRow['SampleID'],UploadDate=sampleRow['uploadDate'],UploadStatus='Complete',UploadID=uploadID,DatasetType=sampleRow['DatasetType'],SolvedStatus='Unsolved',RunID=sampleRow['RunID'],Notes=sampleRow['Notes'])
     newAnalysis = Analysis(AnalysisID=analysisID)
     newAnalysisStatus = AnalysisStatus(AnalysisStep='pending',UpdateDate=sampleRow['updateDate'],UpdateUser=sampleRow['userID'])   
 
@@ -157,7 +158,4 @@ def addDatasetandCohortInformation(**sampleRow):
         db.session.add(newCohort)
 
     else:
-        if newCohort2Family is not None:
-            db.session.add(newCohort2Family)
-
-    db.session.add(newDataset)
+        db.session.add(newDataset)

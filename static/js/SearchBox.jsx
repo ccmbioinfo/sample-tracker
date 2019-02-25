@@ -11,6 +11,7 @@ export const forminputs = {
                 sampleSelect: '',
                 assignedToSelect: '',
                 datasetTypeSelect: '',
+                tissueTypeSelect: '',
 				familySelect: '',
                 analysisSelect: '',
 				uploadSelect:'',

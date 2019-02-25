@@ -77,13 +77,6 @@ export default class SampleSelectBox extends React.Component{
                                           						</FormControl>
 									</FormGroup>
 									
-									<FormGroup controlId="familySelect" bsSize="sm">
-										<ControlLabel>
-					 						Family ID(s)
-										</ControlLabel>
-											<FormControl bsSize="sm" type="text" placeholder="Enter Family ID(s)" onChange={this.props.fetchSamples} value={this.props.formInput.familySelect}/>
-		
-  									</FormGroup>
 									<FormGroup controlId="sampleSelect" bsSize="sm">
 										<ControlLabel>
 					 						Sample Name(s)
@@ -109,6 +102,13 @@ export default class SampleSelectBox extends React.Component{
                                             <option value="ALL">ALL</option>
                                             {this.props.datasetType.map( (proj,index) => <option key = {index} value={proj} >{proj}</option> )}
                                         </FormControl>	
+  									</FormGroup>
+									<FormGroup controlId="tissueTypeSelect" bsSize="sm">
+										<ControlLabel>
+					 						Tissue type
+										</ControlLabel>
+											<FormControl bsSize="sm" type="text" placeholder="Enter tissue name" onChange={this.props.fetchSamples} value={this.props.formInput.tissueTypeSelect}/>
+		
   									</FormGroup>
 									<FormGroup controlId="pipelineSelect" bsSize="sm">
 										<ControlLabel>
