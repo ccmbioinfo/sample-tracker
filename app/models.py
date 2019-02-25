@@ -27,47 +27,45 @@ class Family(db.Model):
 	
 	FamilyID = db.Column(db.String(30), primary_key=True)
 	samples = db.relationship('Sample',backref='family',lazy ='dynamic')
-	cohorts = db.relationship('Cohort2Family',backref='family',lazy='dynamic')
 
 class Sample(db.Model):
 	
-	SampleID = db.Column(db.String(50), primary_key=True)
-	SampleName = db.Column(db.String(50), nullable=False)
-	Gender = db.Column(db.Enum(SexEnum))
-	FamilyID = db.Column(db.String(30), db.ForeignKey('family.FamilyID',onupdate="cascade",ondelete="cascade"), nullable=False)
-	SampleType = db.Column(db.String(30))
-	PhenomeCentralSampleID = db.Column(db.String(45))
-	samples = db.relationship("Dataset", backref='sample', lazy='dynamic')
+    SampleID = db.Column(db.String(50), primary_key=True)
+    SampleName = db.Column(db.String(50), nullable=False)
+    Gender = db.Column(db.Enum(SexEnum))
+    FamilyID = db.Column(db.String(30), db.ForeignKey('family.FamilyID',onupdate="cascade",ondelete="cascade"), nullable=False)
+    SampleType = db.Column(db.String(30))
+    TissueType = db.Column(db.String(30))
+    PhenomeCentralSampleID = db.Column(db.String(45))
+    samples = db.relationship("Dataset", backref='sample', lazy='dynamic')
 
 class Cohort(db.Model):
 
     CohortID = db.Column(db.Integer, primary_key=True)
     CohortName = db.Column(db.String(100), nullable=False, unique=True)
     CohortDescription = db.Column(db.Text)
-    cohorts = db.relationship('Cohort2Family',backref='cohort',lazy='dynamic')	
     cohorts2Data = db.relationship('Dataset2Cohort', backref='cohort',lazy='dynamic')
-
-class Cohort2Family(db.Model):
-
-	__tablename__="cohort2Family"
-	CohortID = db.Column(db.Integer, db.ForeignKey('cohort.CohortID',onupdate="cascade",ondelete="cascade"), nullable=False, primary_key = True)
-	FamilyID = db.Column(db.String(30), db.ForeignKey('family.FamilyID',onupdate="cascade",ondelete="cascade"), nullable=False, primary_key = True)
+    cohorts2Dataset = db.relationship('Dataset', backref='cohort',lazy='dynamic')
 
 class Dataset(db.Model):
 
-	DatasetID = db.Column(db.Integer, primary_key = True)
-	SampleID = db.Column(db.String(50), db.ForeignKey('sample.SampleID', onupdate="cascade",ondelete="restrict"), nullable=False)
-	UploadDate = db.Column(db.Date, nullable=False)
-	UploadID = db.Column(db.Integer,db.ForeignKey('uploaders.UploadID', onupdate="cascade",ondelete="restrict"), nullable=False)
-	UploadStatus = db.Column(db.String(45), nullable=False)
-	HPFPath = db.Column(db.String(500))
-	DatasetType = db.Column(db.String(45), nullable=False)
-	SolvedStatus = db.Column(db.String(30), nullable=False)
-	InputFile = db.Column(db.Text)
-	RunID = db.Column(db.String(45))
-	Notes = db.Column(db.Text)
-	analyses = db.relationship('Analysis',backref='dataset',lazy='dynamic')
-	data2Cohorts = db.relationship('Dataset2Cohort',backref='dataset',lazy='dynamic')
+    __table_args__ = (
+        db.UniqueConstraint('SampleID','UploadDate','DatasetType', name='unique_sample_datasettype_perdate'),
+    )
+    DatasetID = db.Column(db.Integer, primary_key = True)
+    SampleID = db.Column(db.String(50), db.ForeignKey('sample.SampleID', onupdate="cascade",ondelete="restrict"), nullable=False)
+    UploadDate = db.Column(db.Date, nullable=False)
+    UploadID = db.Column(db.Integer,db.ForeignKey('uploaders.UploadID', onupdate="cascade",ondelete="restrict"), nullable=False)
+    UploadStatus = db.Column(db.String(45), nullable=False)
+    HPFPath = db.Column(db.String(500))
+    DatasetType = db.Column(db.String(45), nullable=False)
+    SolvedStatus = db.Column(db.String(30), nullable=False)
+    InputFile = db.Column(db.Text)
+    RunID = db.Column(db.String(45))
+    Notes = db.Column(db.Text)
+    ActiveCohort = db.Column(db.Integer,db.ForeignKey('cohort.CohortID', onupdate="cascade",ondelete="restrict"))
+    analyses = db.relationship('Analysis',backref='dataset',lazy='dynamic')
+    data2Cohorts = db.relationship('Dataset2Cohort',backref='dataset',lazy='dynamic')
 
 class Dataset2Cohort(db.Model):
 	
