@@ -415,7 +415,7 @@ export default class ManualUpdateTable extends React.Component {
       { key: 'Notes', name: 'Notes',editable:true,resizable:true,width:250, visible: true }
     ];
     return  (
-      <div>
+      <div style={{width:"2000px"}}>
       <Dropzone
         disableClick
         style={{position: "relative"}}

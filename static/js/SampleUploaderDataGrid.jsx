@@ -500,7 +500,7 @@ export default class ManualInputTable extends React.Component {
       { key: 'UploadUser', name: 'Upload as', editable:true,resizable:true,width:250, visible: this.state.accessLevel == 'Admin' ? true:false, editor: <DropDownEditor options={this.state.existingUsers} />  }
     ];
     return  (
-      <div> 
+      <div style={{width:"2000px"}}> 
       <Dropzone
         disableClick
         style={{position: "relative"}}
