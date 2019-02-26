@@ -9,7 +9,7 @@ import {FETCH_COHORT_STATS,FETCH_UPLOAD_USER_SAMPLES} from './Url.jsx';
 import CohortTable from './CohortTable';
 import {UPDATE_COHORT_FIELDS} from './Url.jsx';
 
-const divStyle= {height: "800px",  margin: "25px 0px"};
+const divStyle= {overflow: "auto",  margin: "25px 0px"};
 export default class CohortStats extends React.Component{
 
     constructor(props) {
@@ -65,6 +65,7 @@ export default class CohortStats extends React.Component{
             <Tabs  style={{marginLeft:"25px"}} defaultActiveKey={1} onSelect={this.handleSelect} activeKey={this.state.key} id='CohortStatsTab'>   
             <Tab eventKey={1} title="index">
 
+                <div style={{width:"2000px"}}>
                 <ToolkitProvider  data={ this.state.cohorts } columns={ columns }  keyField='CohortName'>
                 {
                     props => (
@@ -107,6 +108,7 @@ export default class CohortStats extends React.Component{
                     )
                 }
                 </ToolkitProvider>
+                </div>
             </Tab>
             {this.state.cohorts.map( (cohort,index) => { return (<Tab key={index} eventKey={index+2} title={cohort.CohortName}><div style={divStyle}><CohortTable samples={this.state.samples}/></div></Tab>); }) }
             </Tabs>

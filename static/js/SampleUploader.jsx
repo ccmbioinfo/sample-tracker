@@ -5,7 +5,7 @@ import ManualInputTable from './SampleUploaderDataGrid';
 import ManualUpdateTable from './SampleUpdaterDataGrid';
 import {GET_LOGGED_USER} from './Url.jsx';
 
-const divStyle = {padding: "10px"};
+const divStyle = {overflow: "auto", padding: "10px"};
 export default class SampleUploader extends React.Component{
 
     constructor(props) {
@@ -36,7 +36,8 @@ export default class SampleUploader extends React.Component{
    
     return  (
 
-        <Tabs style= {{divStyle}} defaultActiveKey={2} onSelect={this.handleSelect} activeKey={this.state.key} id='uploadSwitchTab'>
+        <div style={divStyle}>
+        <Tabs  defaultActiveKey={2} onSelect={this.handleSelect} activeKey={this.state.key} id='uploadSwitchTab'>
         <Tab eventKey={2} title="Enter new samples into database">
             <ManualInputTable/>
         </Tab>
@@ -47,6 +48,7 @@ export default class SampleUploader extends React.Component{
         </Tab>
         }
         </Tabs>
+        </div>
     );
   }
 }
