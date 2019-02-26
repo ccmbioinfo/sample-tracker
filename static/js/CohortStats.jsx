@@ -1,12 +1,15 @@
 import React from "react";
 import BootstrapTable from 'react-bootstrap-table-next';
 import {Tabs, Tab,  Button} from 'react-bootstrap';
+import cellEditFactory, {Type}  from 'react-bootstrap-table2-editor';
+import ToolkitProvider, { CSVExport } from 'react-bootstrap-table2-toolkit';
+import paginationFactory from 'react-bootstrap-table2-paginator';
+import filterFactory, { textFilter, dateFilter, selectFilter } from 'react-bootstrap-table2-filter';
 import {FETCH_COHORT_STATS,FETCH_UPLOAD_USER_SAMPLES} from './Url.jsx';
 import CohortTable from './CohortTable';
-//import 'react-perfect-scrollbar/dist/css/styles.css';
-//import PerfectScrollbar from 'react-perfect-scrollbar';
+import {UPDATE_COHORT_FIELDS} from './Url.jsx';
 
-const divStyle= {height: "800px",  margin: "25px 0px", overflow: "scroll"};
+const divStyle= {height: "800px",  margin: "25px 0px"};
 export default class CohortStats extends React.Component{
 
     constructor(props) {
@@ -37,7 +40,7 @@ export default class CohortStats extends React.Component{
     render() {
 
         let  columns = [
-                    {dataField: 'CohortName', text:"Cohort Name",sort: true, editable: false, 
+                    {dataField: 'CohortName', text:"Cohort Name",sort: true, editable: false,headerStyle: (colum, colIndex) => {return { width: '350px' }},
                                 formatter: (cell,row) => {
                                                           let cohortIndex = -1; 
                                                           this.state.cohorts.forEach((cohort,index) => {
@@ -50,25 +53,64 @@ export default class CohortStats extends React.Component{
                                                             return (<a href='#' onClick={(e) => this.handleSelect(cohortIndex,e)}>{row.CohortName}</a>);
                                                         }
                     }, 
-                    {dataField: 'Families', text:"Families",sort: true, editable: false}, 
-                    {dataField: 'Samples', text:"Samples",sort: true, editable: false}, 
-                    {dataField: 'Processed', text:"Samples processed",sort: true, editable: false} 
-                    
+                    {dataField: 'Families', text:"Families",sort: true, editable: false,headerStyle: (colum, colIndex) => {return { width: '150px' }} }, 
+                    {dataField: 'Samples', text:"Samples",sort: true, editable: false, headerStyle: (colum, colIndex) => {return { width: '150px' }} }, 
+                    {dataField: 'Processed', text:"Samples processed",sort: true, editable: false, headerStyle: (colum, colIndex) => {return { width: '200px'}} },
+                    {dataField: 'CohortDescription', text:"Notes",sort: false, editable: true,editor: {type: Type.TEXT}} 
+                                        
         ];
         return  (
-
+        
+            <div style = {divStyle}>
             <Tabs  style={{marginLeft:"25px"}} defaultActiveKey={1} onSelect={this.handleSelect} activeKey={this.state.key} id='CohortStatsTab'>   
             <Tab eventKey={1} title="index">
-                <BootstrapTable 
-                    noDataIndication="No samples" 
-                    keyField='CohortName' 
-                    data={ this.state.cohorts } 
-                    columns={ columns }
-                    hover 
-                />
+
+                <ToolkitProvider  data={ this.state.cohorts } columns={ columns }  keyField='CohortName'>
+                {
+                    props => (
+                    <div>
+                    <BootstrapTable
+                    noDataIndication="No cohorts" { ...props.baseProps }
+                    cellEdit={  cellEditFactory({
+                                                mode: 'dbclick',
+                                                blurToSave: true,
+                                                afterSaveCell: (oldValue, newValue, row, column) => {
+
+                                                                                                        if(newValue != oldValue && newValue.length >0){
+                                                                                                            let updateObj = { 'updateTo':newValue };
+                                                                                                            if(column.dataField == 'CohortDescription'){
+                                                                                                
+                                                                                                                updateObj['CohortID'] = row.CohortID;
+                                                                                                                updateObj['field'] = column.dataField; 
+    
+                                                                                                            }
+                                                                                                            fetch(UPDATE_COHORT_FIELDS,{
+                                                                                                                method: "post",
+                                                                                                                headers: {
+
+                                                                                                                    'Accept': 'application/json, text/plain, */*',
+                                                                                                                    'Content-Type': 'application/json',
+                                                                                                                    'X-CSRFToken': document.getElementById('csrf_token').value
+                                                                                                                },
+                                                                                                                body: JSON.stringify(updateObj)
+                                                                                                            })
+                                                                                                            .then(response =>response.json())
+                                                                                                            .then(data => alert(data.Status));
+                                                                                                            
+                                                                                                        }
+
+                                                                                                    }
+                                                })
+                            }
+                    />
+                    </div>
+                    )
+                }
+                </ToolkitProvider>
             </Tab>
             {this.state.cohorts.map( (cohort,index) => { return (<Tab key={index} eventKey={index+2} title={cohort.CohortName}><div style={divStyle}><CohortTable samples={this.state.samples}/></div></Tab>); }) }
             </Tabs>
+            </div>
         );
     }
 }
