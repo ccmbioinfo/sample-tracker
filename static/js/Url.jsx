@@ -4,6 +4,7 @@ export const FETCH_PIPELINE_VERSIONS = HOST + '/fetch/PipelineVersions';
 export const UPDATE_ANALYSIS_STATUS = HOST + '/updateAnalysisStatus';
 export const UPDATE_DATASET_FIELDS = HOST + '/updateDatasetFields';
 export const UPDATE_SAMPLE_FIELDS = HOST + '/updateSampleFields';
+export const UPDATE_COHORT_FIELDS = HOST +  '/updateCohortFields';
 export const ADD_DATASETS_TO_COHORT = HOST + '/addDatasets2Cohort';
 export const GET_LOGGED_USER =  HOST + '/get_logged_user';
 export const LOGOUT = HOST + '/logout';

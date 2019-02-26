@@ -108,7 +108,7 @@ export default class CohortTable extends React.Component{
                                                                                                         body: JSON.stringify(updateObj)
                                                                                                     })
                                                                                                     .then(response =>response.json())
-                                                                                                    .then(data => alert('Updated!'));
+                                                                                                    .then(data => alert(data.Status));
                                                                                                 }
                                                                                               }
                                                 } } ) }

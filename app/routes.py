@@ -474,6 +474,9 @@ def get_cohort_stats():
     for cohortID,cohortName in fetch_cohorts(current_user.username,current_user.accessLevel.value).items(): 
         tmpObj = {}
         tmpObj['CohortName'] = cohortName
+        tmpObj['CohortID'] = cohortID
+        descQuery = db.session.query(Cohort).filter(Cohort.CohortID==cohortID).first()
+        tmpObj['CohortDescription'] = descQuery.CohortDescription
         tmpObj['Families'] = db.session.query(Family).join(Sample).join(Dataset).join(Cohort).filter(Cohort.CohortName==cohortName).distinct().count()
         tmpObj['Samples'] = db.session.query(Dataset.SampleID).join(Cohort).filter(Cohort.CohortName==cohortName).distinct().count()
         tmpObj['pendingSamples']=[]
@@ -800,7 +803,7 @@ def updateAnalysisFields():
         #commit transaction here.
         try:
             db.session.commit()
-            return json.dumps({"Status":"Success"},default=str)
+            return json.dumps({"Status":"updated!"},default=str)
         except:
             db.session.rollback()
     else:
@@ -835,7 +838,38 @@ def updateSampleFields():
         #commit transaction here.
         try:
             db.session.commit()
-            return json.dumps({"Status":"Success"},default=str)
+            return json.dumps({"Status":"updated!"},default=str)
+        except:
+            db.session.rollback()
+    else:
+        db.session.rollback()
+    return json.dumps({"Status": "Error"},default=str)
+
+@app.route('/updateCohortFields',methods=["POST"])
+@login_required
+def updateCohortFields():
+    
+    cohortObj = {}
+    retStr= {'Status': 'Error'}
+    if request.method == 'POST':
+        cohortObj = request.get_json()
+    else:
+        return json.dumps(retStr,default=str)
+
+    if current_user.accessLevel.value != 'Admin':
+        return json.dumps(retStr,default=str)
+
+    success = 1
+    if 'CohortID' in cohortObj and 'updateTo' in cohortObj and 'field' in cohortObj:
+            try:
+                db.session.query(Cohort).filter(Cohort.CohortID==cohortObj['CohortID']).update({cohortObj['field']: cohortObj['updateTo']})
+            except:
+                success = 0
+    if success  == 1:
+        #commit transaction here.
+        try:
+            db.session.commit()
+            return json.dumps({"Status":"updated!"},default=str)
         except:
             db.session.rollback()
     else:
