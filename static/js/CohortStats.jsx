@@ -40,7 +40,7 @@ export default class CohortStats extends React.Component{
     render() {
 
         let  columns = [
-                    {dataField: 'CohortName', text:"Cohort Name",sort: true, editable: false,headerStyle: (colum, colIndex) => {return { width: '350px' }},
+                    {dataField: 'CohortName', text:"Cohort Name",sort: true, editable: true,headerStyle: (colum, colIndex) => {return { width: '350px' }},editor: {type: Type.TEXT},
                                 formatter: (cell,row) => {
                                                           let cohortIndex = -1; 
                                                           this.state.cohorts.forEach((cohort,index) => {
@@ -66,7 +66,7 @@ export default class CohortStats extends React.Component{
             <Tab eventKey={1} title="index">
 
                 <div style={{width:"2000px"}}>
-                <ToolkitProvider  data={ this.state.cohorts } columns={ columns }  keyField='CohortName'>
+                <ToolkitProvider  data={ this.state.cohorts } columns={ columns }  keyField='CohortID'>
                 {
                     props => (
                     <div>
@@ -78,13 +78,8 @@ export default class CohortStats extends React.Component{
                                                 afterSaveCell: (oldValue, newValue, row, column) => {
 
                                                                                                         if(newValue != oldValue && newValue.length >0){
-                                                                                                            let updateObj = { 'updateTo':newValue };
-                                                                                                            if(column.dataField == 'CohortDescription'){
-                                                                                                
-                                                                                                                updateObj['CohortID'] = row.CohortID;
-                                                                                                                updateObj['field'] = column.dataField; 
-    
-                                                                                                            }
+                                                                                                            
+                                                                                                            let updateObj = { 'updateTo':newValue,'CohortID': row.CohortID, 'field':column.dataField };
                                                                                                             fetch(UPDATE_COHORT_FIELDS,{
                                                                                                                 method: "post",
                                                                                                                 headers: {
