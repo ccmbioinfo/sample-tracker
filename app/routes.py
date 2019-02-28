@@ -861,10 +861,14 @@ def updateCohortFields():
 
     success = 1
     if 'CohortID' in cohortObj and 'updateTo' in cohortObj and 'field' in cohortObj:
-            try:
-                db.session.query(Cohort).filter(Cohort.CohortID==cohortObj['CohortID']).update({cohortObj['field']: cohortObj['updateTo']})
-            except:
-                success = 0
+        
+        if cohortObj['field'] == 'CohortName':
+            if db.session.query(Cohort).filter(Cohort.CohortName==cohortObj['updateTo']).count() == 1:
+                return json.dumps({"Status":"Error! This cohort name already exists. If you are wishing to move samples to a different cohort, please do so from the 'Search Samples' tab."},default=str)
+        try:
+            db.session.query(Cohort).filter(Cohort.CohortID==cohortObj['CohortID']).update({cohortObj['field']: cohortObj['updateTo']})
+        except:
+            success = 0
     if success  == 1:
         #commit transaction here.
         try:
