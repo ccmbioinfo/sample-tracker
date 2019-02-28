@@ -63,7 +63,7 @@ class Dataset(db.Model):
     InputFile = db.Column(db.Text)
     RunID = db.Column(db.String(45))
     Notes = db.Column(db.Text)
-    ActiveCohort = db.Column(db.Integer,db.ForeignKey('cohort.CohortID', onupdate="cascade",ondelete="restrict"))
+    ActiveCohort = db.Column(db.Integer,db.ForeignKey('cohort.CohortID', onupdate="cascade",ondelete="restrict"), nullable=False)
     analyses = db.relationship('Analysis',backref='dataset',lazy='dynamic')
     data2Cohorts = db.relationship('Dataset2Cohort',backref='dataset',lazy='dynamic')
 
@@ -85,18 +85,19 @@ class Uploaders(db.Model):
 
 class Analysis(db.Model):
 
-    AnalysisID = db.Column(db.String(100), primary_key = True)
+    AnalysisID = db.Column(db.Integer, primary_key = True)
     DatasetID = db.Column(db.Integer, db.ForeignKey('dataset.DatasetID', onupdate="cascade",ondelete="cascade"), nullable=False)
     PipelineVersion = db.Column(db.String(30))
     ResultsDirectory = db.Column(db.Text)
     ResultsBAM = db.Column(db.Text)
     AssignedTo = db.Column(db.String(100), nullable=True)
+    RequestedDate = db.Column(db.Date, nullable=True)
     analysisStatuses = db.relationship('AnalysisStatus', backref='analysis', lazy='dynamic')
 
 class AnalysisStatus(db.Model):
     
     __tablename__ = "analysisStatus"
-    AnalysisID = db.Column(db.String(100), db.ForeignKey('analysis.AnalysisID', onupdate="cascade",ondelete="cascade"), nullable=False, primary_key = True)
+    AnalysisID = db.Column(db.Integer, db.ForeignKey('analysis.AnalysisID', onupdate="cascade",ondelete="cascade"), nullable=False, primary_key = True)
     AnalysisStep = db.Column(db.String(45), nullable = False, primary_key = True)
     UpdateDate = db.Column(db.DateTime, nullable = False)
     UpdateUser = db.Column(db.Integer, db.ForeignKey('user.id', onupdate="cascade",ondelete="restrict"))

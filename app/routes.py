@@ -445,12 +445,12 @@ def checkUpdateSamples():
     if 'samples' in postObj:
         for sampleRecord in postObj['samples']:
             if 'SampleID' in sampleRecord and 'DatasetType' in sampleRecord and 'UploadDate' in sampleRecord:
-                analysisID = sampleRecord['SampleID']+"_"+sampleRecord['DatasetType']+"_"+sampleRecord['UploadDate']
-                checkAnalysis = db.session.query(Analysis).filter(Analysis.AnalysisID==analysisID).all()
-                if len(checkAnalysis) == 0:
+                datasetIDQuery = db.session.query(Dataset,Analysis).join(Analysis).filter(Dataset.SampleID==sampleRecord['SampleID']).filter(Dataset.DatasetType==sampleRecord['DatasetType']).filter(Analysis.RequestedDate==sampleRecord['UploadDate'])
+                if datasetIDQuery.count() != 1: 
                     retStr['Errors'].append("Cannot find dataset matching Sample: "+sampleRecord['SampleID']+" , Type: "+sampleRecord['DatasetType']+", UploadDate: "+sampleRecord['UploadDate'])
                 else:
-                    checkAnalysisStatus = db.session.query(AnalysisStatus).filter(AnalysisStatus.AnalysisID==analysisID).filter(AnalysisStatus.AnalysisStep=="done").all()
+                    dataset = datasetIDQuery.first()
+                    checkAnalysisStatus = db.session.query(AnalysisStatus).filter(AnalysisStatus.AnalysisID==dataset.Analysis.AnalysisID).filter(AnalysisStatus.AnalysisStep=="done").all()
                     if len(checkAnalysisStatus) == 1:
                         retStr['Errors'].append("Dataset matching Sample: "+sampleRecord['SampleID']+" , Type: "+sampleRecord['DatasetType']+", UploadDate: "+sampleRecord['UploadDate']+" is already marked as 'done' in the database. Please contact Teja to update it.")
             else:
@@ -509,13 +509,12 @@ def requestReanalysis():
             for dataset in postObj['Samples']:
                 analysisID = -1
                 if 'datasetID' in dataset:
-                    analysisID = dataset['SampleID']+"_"+dataset['datasetType']+"_"+today_date
                     try:
-                        newAnalysis = Analysis(AnalysisID=analysisID,DatasetID=dataset['datasetID'])
+                        newAnalysis = Analysis(DatasetID=dataset['datasetID'],RequestedDate=today_date)
                         Notes = None
                         if 'reAnalysisNotes' in dataset:
                             Notes = dataset['reAnalysisNotes']
-                        newAnalysisStatus = AnalysisStatus(AnalysisID=analysisID,AnalysisStep='Reanalysis requested',UpdateDate=today,UpdateUser=current_user.id,Notes=Notes)
+                        newAnalysisStatus = AnalysisStatus(AnalysisStep='Reanalysis requested',UpdateDate=today,UpdateUser=current_user.id,Notes=Notes)
                         newAnalysis.analysisStatuses.append(newAnalysisStatus)
                         db.session.add(newAnalysis)
                     except:
@@ -753,11 +752,10 @@ def updateSampleStatus():
         for sampleRecord in sampleObj['samples']:
             if checkSampleUpdateRecordValues(sampleRecord) == False:
                 return json.dumps({'Status': 'Error'},default=str)
-   
+  
     success = 1
     if 'samples' in sampleObj:
         for sampleRecord in sampleObj['samples']:      
-           
             try:
                 updateSampleStatusinDB(**sampleRecord,updateDate=today,userID=current_user.id)
             except:
@@ -861,7 +859,7 @@ def updateCohortFields():
 
     success = 1
     if 'CohortID' in cohortObj and 'updateTo' in cohortObj and 'field' in cohortObj:
-        
+
         if cohortObj['field'] == 'CohortName':
             if db.session.query(Cohort).filter(Cohort.CohortName==cohortObj['updateTo']).count() == 1:
                 return json.dumps({"Status":"Error! This cohort name already exists. If you are wishing to move samples to a different cohort, please do so from the 'Search Samples' tab."},default=str)

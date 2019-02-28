@@ -62,13 +62,18 @@ def updateSampleStatusinDB(**sampleRecord):
     if SampleIDExists(sampleRecord['SampleID']) == 0:
         raise Exception('SampleID doesnt exist')
    
+    analysisID = -1
+    datasetIDQuery = db.session.query(Dataset,Analysis).join(Analysis).filter(Dataset.SampleID==sampleRecord['SampleID']).filter(Dataset.DatasetType==sampleRecord['DatasetType']).filter(Analysis.RequestedDate==sampleRecord['UploadDate'])
+   
+    if datasetIDQuery.count() != 1:
+        raise Exception('DatasetID doesnt exist or has multiple hits')
+    else:
+        dataset = datasetIDQuery.first()
+        analysisID = dataset.Analysis.AnalysisID
+  
     if 'InputFile' in sampleRecord and len(sampleRecord['InputFile']) >0:
-        datasetIDQuery = db.session.query(Dataset).filter(Dataset.SampleID==sampleRecord['SampleID']).filter(Dataset.DatasetType==sampleRecord['DatasetType']).filter(Dataset.UploadDate==sampleRecord['UploadDate'])
-        if datasetIDQuery.count() != 1:
-            raise Exception('DatasetID doesnt exist or has multiple hits')
         datasetIDQuery.update({'InputFile':sampleRecord['InputFile']})
 
-    analysisID = sampleRecord['SampleID']+"_"+sampleRecord['DatasetType']+"_"+sampleRecord['UploadDate']
     analysisIDQuery = db.session.query(Analysis).filter(Analysis.AnalysisID==analysisID)
     if analysisIDQuery.count() == 0:
         raise Exception('AnalysisID doesnt exist')
@@ -133,7 +138,6 @@ def addDatasetandCohortInformation(**sampleRow):
         if UploaderResult is not None:
             uploadID = UploaderResult.UploadID
 
-    analysisID = sampleRow['SampleID']+"_"+sampleRow['DatasetType']+"_"+sampleRow['uploadDate']
     
     newDataset = None    
     if sampleRow['cohortID'] == -1:
@@ -148,7 +152,7 @@ def addDatasetandCohortInformation(**sampleRow):
         newDataset2CohortID = Dataset2Cohort(CohortID=sampleRow['cohortID'])
         newDataset = Dataset(DatasetID=None,SampleID=sampleRow['SampleID'],UploadDate=sampleRow['uploadDate'],UploadStatus='Complete',UploadID=uploadID,DatasetType=sampleRow['DatasetType'],SolvedStatus='Unsolved',RunID=sampleRow['RunID'],Notes=sampleRow['Notes'],ActiveCohort=sampleRow['cohortID'])
     
-    newAnalysis = Analysis(AnalysisID=analysisID)
+    newAnalysis = Analysis(RequestedDate=sampleRow['uploadDate'])
     newAnalysisStatus = AnalysisStatus(AnalysisStep='pending',UpdateDate=sampleRow['updateDate'],UpdateUser=sampleRow['userID'])   
 
     newDataset.data2Cohorts.append(newDataset2CohortID)
