@@ -4,8 +4,8 @@ import paginationFactory from 'react-bootstrap-table2-paginator';
 import filterFactory, { textFilter, dateFilter, selectFilter } from 'react-bootstrap-table2-filter';
 import ToolkitProvider, { CSVExport } from 'react-bootstrap-table2-toolkit';
 import cellEditFactory, {Type}  from 'react-bootstrap-table2-editor';
-import {ANALYSIS_STATUSES, SOLVED_STATUSES} from './Constants';
-import {UPDATE_SAMPLE_FIELDS, UPDATE_DATASET_FIELDS,UPDATE_ANALYSIS_STATUS,FETCH_USER_LIST, UPDATE_ANALYSIS_FIELDS} from './Url.jsx';
+import {DATASET_TYPES, ANALYSIS_STATUSES, SOLVED_STATUSES} from './Constants';
+import {CHECK_IF_SAMPLE_EXISTS,UPDATE_SAMPLE_FIELDS, UPDATE_DATASET_FIELDS,UPDATE_ANALYSIS_STATUS,FETCH_USER_LIST, UPDATE_ANALYSIS_FIELDS} from './Url.jsx';
 
 
 const analysis_status_for_edits = [];
@@ -15,6 +15,10 @@ ANALYSIS_STATUSES.forEach((analysisStatus) => {analysis_status_for_filters[analy
 const solved_status_for_edits = [];
 const solved_status_for_filters = {};
 SOLVED_STATUSES.forEach((solvedStatus) => { solved_status_for_filters[solvedStatus]=solvedStatus; solved_status_for_edits.push({value: solvedStatus,label: solvedStatus})});
+
+const datasets_for_edits = [];
+const datasets_for_filters = {};
+DATASET_TYPES.forEach((solvedStatus) => { datasets_for_filters[solvedStatus]=solvedStatus; datasets_for_edits.push({value: solvedStatus,label: solvedStatus})});
 
 const divStyle = {width: "2550px",fontSize : "0.85em"};
 const customTotal = (from, to, size) => (
@@ -42,11 +46,26 @@ export default class CohortTable extends React.Component{
    
         let  columns = [
                     {dataField: 'PhenomeCentralSampleID', text: 'PCID', sort: true,editable: true,editor: {type: Type.TEXT}, filter: textFilter(), headerStyle: (colum, colIndex) => {return { width: '150px', textAlign: 'center' }; }},
-                    {dataField: 'SampleID', text:'Sample ID',sort: true, editable: false, filter: textFilter(), headerStyle: (colum, colIndex) => {return { width: '150px', textAlign: 'center' }; }},
+                    {dataField: 'SampleID', text:'Sample ID',sort: true, editable: true,editor: {type: Type.TEXT}, filter: textFilter(), headerStyle: (colum, colIndex) => {return { width: '150px', textAlign: 'center' }; }, 
+                        validator: (newValue,row,column,done) => {
+                                    if(newValue.indexOf("_") <=1){
+        
+                                        return {
+
+                                            valid: false,
+                                            message: 'SampleID should be in the format FamilyID_SampleName'
+                                                
+                                        };
+
+                                    }
+                        },
+    
+
+                    },
                     {dataField: 'AssignedTo', text:'Assigned to',sort: true, editable: true, filter: textFilter(), headerStyle: (colum, colIndex) => {return { width: '150px', textAlign: 'center' }; }, editor: {type: Type.SELECT, options: this.state.userList}},
-                    {dataField: 'DatasetType', text:"Dataset",sort: true, editable: false, filter: textFilter(), headerStyle: (colum, colIndex) => {return { width: '150px', textAlign: 'center' }; }},
+                    {dataField: 'DatasetType', text:"Dataset",sort: true, editable: true,editor: {type: Type.SELECT, options:  datasets_for_edits}, filter: selectFilter({ options: datasets_for_filters }), headerStyle: (colum, colIndex) => {return { width: '150px', textAlign: 'center' }; }},
                     {dataField: 'TissueType', text:"Tissue",sort: true, editable: true, filter: textFilter(), headerStyle: (colum, colIndex) => {return { width: '150px', textAlign: 'center' }; },editor: {type: Type.TEXT}},
-                    {dataField: 'UploadDate', text: 'Upload Date', sort:true, editable: false, headerStyle: (colum, colIndex) => {return { width: '150px', textAlign: 'center' }; }},
+                    {dataField: 'UploadDate', text: 'Upload Date', sort:true, editable: true, editor: {type: Type.TEXT}, headerStyle: (colum, colIndex) => {return { width: '150px', textAlign: 'center' }; }},
                     {dataField: 'SolvedStatus',text: 'Solved?', sort: true, filter: selectFilter({ options: solved_status_for_filters }),headerStyle: (colum, colIndex) => {return { width: '150px', textAlign: 'center' }; }, editor: {type: Type.SELECT, options: solved_status_for_edits}},
                     {dataField: 'AnalysisStatus', text: 'Analysis Status',sort: true, filter: selectFilter({ options: analysis_status_for_filters }), headerStyle: (colum, colIndex) => {return { width: '150px', textAlign: 'center' }; }, editor: {type: Type.SELECT, options: analysis_status_for_edits} },
                     {dataField: 'InputFile',text: 'Input file', sort: true, editable: true,headerStyle: (colum, colIndex) => {return { width: '750px', textAlign: 'center' }; },editor: {type: Type.TEXT}},
@@ -77,7 +96,7 @@ export default class CohortTable extends React.Component{
                                                                                                     updateObj['datasets'] = [{'analysisID': row.AnalysisID}];
                                                                                                     UPDATE_URL = UPDATE_ANALYSIS_STATUS;
                                                                                                 }
-                                                                                                else if (column.dataField == 'SolvedStatus' || column.dataField == 'InputFile' || column.dataField == 'Notes'){
+                                                                                                else if (column.dataField == 'UploadDate' || column.dataField == 'SolvedStatus' || column.dataField == 'InputFile' || column.dataField == 'Notes' || column.dataField == 'DatasetType'){
                                                                                                         
                                                                                                         updateObj['field'] = column.dataField;       
                                                                                                         updateObj['datasets'] = [{'datasetID': row.id}];
@@ -89,11 +108,18 @@ export default class CohortTable extends React.Component{
                                                                                                         updateObj['field'] = column.dataField;          
                                                                                                         UPDATE_URL = UPDATE_ANALYSIS_FIELDS; 
                                                                                                  }
-                                                                                                else if(column.dataField == 'PhenomeCentralSampleID' || column.dataField == "TissueType"){
+                                                                                                 else if(column.dataField == 'PhenomeCentralSampleID' || column.dataField == "TissueType"){
 
                                                                                                     updateObj['samples'] = [{'sampleID': row.SampleID}];
                                                                                                     updateObj['field'] = column.dataField;
                                                                                                     UPDATE_URL = UPDATE_SAMPLE_FIELDS;
+                                                                                                }
+                                                                                                else if(column.dataField == 'SampleID'){
+
+                                                                                                    updateObj['samples'] = [{'sampleID': oldValue}];
+                                                                                                    updateObj['field'] = column.dataField;
+                                                                                                    UPDATE_URL = UPDATE_SAMPLE_FIELDS;
+
                                                                                                 }
                                                                                                 if(UPDATE_URL.length >0){
 

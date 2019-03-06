@@ -39,7 +39,7 @@ export default class SolvedStatusModal extends React.Component {
                     body: JSON.stringify({"datasets":this.props.selectedSamples,"updateTo":this.state.selectedDropDownStatus, "field": "SolvedStatus"})
              })
             .then(response =>response.json())
-            .then(data => alert('Updated!')); 
+            .then(data => alert(data.Status)); 
 
     }
 	render(){
