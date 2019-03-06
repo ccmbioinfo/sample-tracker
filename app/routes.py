@@ -298,13 +298,14 @@ def get_samples_in_cohort(searchterm,searchvalue):
     elif searchterm == 'familySelect':
         for family_id in searchvalue.split(','):
             family_id = family_id.strip()
-            results.extend(cohortbaseQuery.filter(Family.FamilyID==family_id).all())
-            #results = cohortbaseQuery.filter(Family.FamilyID==searchvalue).all()
-
+            if len(family_id) >= 3:
+                results.extend(cohortbaseQuery.filter(Family.FamilyID.like(family_id+"%")).all())
+    
     elif searchterm == 'sampleSelect':
         for sample_id in searchvalue.split(','):
             sample_id = sample_id.strip()
-            results.extend(cohortbaseQuery.filter(Sample.SampleName==sample_id).all())
+            if len(sample_id) >= 3:
+                results.extend(cohortbaseQuery.filter(Sample.SampleName.like(sample_id+"%")).all())
             #results = cohortbaseQuery.filter(Sample.SampleName==searchvalue).all()
 
     elif searchterm == 'datasetTypeSelect':
@@ -612,13 +613,11 @@ def updateDatasetFields():
         if updateSuccess == 1:
             try:
                 db.session.commit()
-                retStr['Status'] = 'Success'
+                retStr['Status'] = 'Updated!'
             except:
                 db.session.rollback()
-                retStr['Status'] = 'Failure'
         else:
             db.session.rollback()
-            retStr['Status'] = 'Failure'
 
         return json.dumps(retStr,default=str)
         
@@ -826,12 +825,43 @@ def updateSampleFields():
     if 'samples' in sampleObj and 'updateTo' in sampleObj and 'field' in sampleObj:
         for record in sampleObj['samples']:      
            
-            try:
-                if 'sampleID' in record:
+            if 'sampleID' in record:
+                
+                if sampleObj['field']=='SampleID':
+                    if SampleIDExists(sampleObj['updateTo']) == 1:
+                        return json.dumps({'Status': 'New SampleID exists in database. SampleID is not updated.'},default=str)
+
+                    oldFamID, oldSampleName = record['sampleID'].split("_",1)
+                    newFamID, newSampleName = sampleObj['updateTo'].split("_",1)
+                    if newFamID is None or newSampleName is None:
+                        return json.dumps(retStr,default=str)    
+                    
+                    # if new familyID doesnt exist - create it first.     
+                    if famIDExists(newFamID) == 0:
+                        try:
+                            insertFamID(newFamID)
+                        except:
+                            success = 0
+                            break
+                    # then update sample's family ID
+                    try:
+                        db.session.query(Sample).filter(Sample.SampleID==record['sampleID']).update({'FamilyID': newFamID})
+                    except:
+                        success = 0
+                        break
+                    #then update sample's sample Name
+                    if db.session.query(Sample).filter(Sample.SampleID==record['sampleID']).filter(Sample.SampleName==newSampleName).count() == 0:
+                        try:
+                            db.session.query(Sample).filter(Sample.SampleID==record['sampleID']).update({'SampleName':newSampleName}) 
+                        except:
+                            success = 0
+                            break    
+                #update sample table regradless of the fields! 
+                try:
                     db.session.query(Sample).filter(Sample.SampleID==record['sampleID']).update({sampleObj['field']: sampleObj['updateTo']})
-            except:
-                success = 0
-                break       
+                except:
+                    success = 0
+                    break
     if success  == 1:
         #commit transaction here.
         try:
