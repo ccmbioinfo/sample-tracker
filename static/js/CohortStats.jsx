@@ -1,26 +1,30 @@
 import React from "react";
 import BootstrapTable from 'react-bootstrap-table-next';
-import {Tabs, Tab,  Button} from 'react-bootstrap';
+import {PanelGroup, Grid, Row, Form, FormGroup,FormControl,ControlLabel,Col,Tabs, Tab,  Button} from 'react-bootstrap';
 import cellEditFactory, {Type}  from 'react-bootstrap-table2-editor';
 import ToolkitProvider, { CSVExport } from 'react-bootstrap-table2-toolkit';
 import paginationFactory from 'react-bootstrap-table2-paginator';
 import filterFactory, { textFilter, dateFilter, selectFilter } from 'react-bootstrap-table2-filter';
-import {FETCH_COHORT_STATS,FETCH_UPLOAD_USER_SAMPLES} from './Url.jsx';
+import {FETCH_PROJECT_LIST, FETCH_COHORT_STATS,FETCH_UPLOAD_USER_SAMPLES, UPDATE_COHORT_FIELDS} from './Url.jsx';
 import CohortTable from './CohortTable';
-import {UPDATE_COHORT_FIELDS} from './Url.jsx';
 
-const divStyle= {overflow: "auto",  margin: "25px 0px"};
+const divStyle= {overflow: "scroll",  margin: "25px 10px"};
 export default class CohortStats extends React.Component{
 
     constructor(props) {
         
         super(props);
-        this.state = { cohorts: [],key:1,samples:[] };
+        this.state = {projects: [],selectedProject: '', cohorts: [],key:1,samples:[] };
         this.handleSelect = this.handleSelect.bind(this);
+        this.fetchCohorts = this.fetchCohorts.bind(this);
     }
    componentDidMount(){
 
-        fetch(FETCH_COHORT_STATS)
+        fetch(FETCH_PROJECT_LIST)
+        .then(resp => resp.json())
+        .then(data => {this.setState({projects: data }); });
+
+        fetch(FETCH_COHORT_STATS+"/ALL")
         .then(resp => resp.json())
         .then(data => { this.setState({ cohorts: data }); });
 
@@ -36,6 +40,15 @@ export default class CohortStats extends React.Component{
             .then((data)=> this.setState({ samples: data}));
         }
 
+
+    }
+    fetchCohorts(event){
+
+        this.setState({selectedProject: event.target.value, key:1});
+
+        fetch(FETCH_COHORT_STATS+"/"+event.target.value)
+        .then(resp => resp.json())
+        .then(data => { this.setState({ cohorts: data }); });
     }
     render() {
 
@@ -62,7 +75,24 @@ export default class CohortStats extends React.Component{
         return  (
         
             <div style = {divStyle}>
-            <Tabs  style={{marginLeft:"25px"}} defaultActiveKey={1} onSelect={this.handleSelect} activeKey={this.state.key} id='CohortStatsTab'>   
+            <Grid>
+                <Row>
+                    <Col md={6} lg={6} mdOffset={3} lgOffset={3}>
+                    <Form>
+                        <FormGroup controlId="projectSelect" bsSize="sm">
+                            <ControlLabel>
+                                Select a project to view cohort list:
+                            </ControlLabel>
+                            <FormControl bsSize="sm" componentClass="select" placeholder="select" onChange={this.fetchCohorts} value={this.state.selectedProject}>
+                                <option value="ALL">ALL</option>
+                                {this.state.projects.map( (proj,index) => <option key = {index} value={proj} >{proj}</option> )}
+                            </FormControl>
+                        </FormGroup>
+                    </Form>
+                    </Col>
+                </Row>
+            </Grid>
+            <Tabs defaultActiveKey={1} onSelect={this.handleSelect} activeKey={this.state.key} id='CohortStatsTab'>   
             <Tab eventKey={1} title="index">
 
                 <div style={{width:"2000px"}}>

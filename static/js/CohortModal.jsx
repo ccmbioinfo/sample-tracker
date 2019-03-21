@@ -75,6 +75,8 @@ export default class CohortModal extends React.Component {
                                         	{Object.keys(this.state.cohortList).map( (cohortID) => <option key = {cohortID} value={cohortID} >{this.state.cohortList[cohortID]}</option> )}
 					</FormControl>
 				</FormGroup>
+                { 0 == 1 &&
+                <div>
 				<p>Or</p>
 				<FormGroup controlId="newCohort" bsSize="sm"> 
 					<ControlLabel>
@@ -82,7 +84,8 @@ export default class CohortModal extends React.Component {
 					</ControlLabel>
 					<FormControl type="text" value={this.state.inputCohortValue} placeholder="Enter a new Cohort name" onChange= {this.handleInputCohortChange}/>
 				</FormGroup>
-			
+                </div>
+			    }
 			<Button disabled={this.state.buttonDisabled} onClick={this.addDatasets2Cohort}>Submit</Button>
 			</Form>
 			

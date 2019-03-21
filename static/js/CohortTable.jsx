@@ -5,7 +5,7 @@ import filterFactory, { textFilter, dateFilter, selectFilter } from 'react-boots
 import ToolkitProvider, { CSVExport } from 'react-bootstrap-table2-toolkit';
 import cellEditFactory, {Type}  from 'react-bootstrap-table2-editor';
 import {DATASET_TYPES, ANALYSIS_STATUSES, SOLVED_STATUSES} from './Constants';
-import {CHECK_IF_SAMPLE_EXISTS,UPDATE_SAMPLE_FIELDS, UPDATE_DATASET_FIELDS,UPDATE_ANALYSIS_STATUS,FETCH_USER_LIST, UPDATE_ANALYSIS_FIELDS} from './Url.jsx';
+import {FETCH_UPLOAD_USER_SAMPLES, CHECK_IF_SAMPLE_EXISTS,UPDATE_SAMPLE_FIELDS, UPDATE_DATASET_FIELDS,UPDATE_ANALYSIS_STATUS,FETCH_USER_LIST, UPDATE_ANALYSIS_FIELDS} from './Url.jsx';
 
 
 const analysis_status_for_edits = [];
@@ -27,6 +27,12 @@ const customTotal = (from, to, size) => (
                 Showing { from } to { to } of { size } 
             </span>
 );
+const selectRow = {
+  mode: 'checkbox',
+  clickToSelect: true,
+  clickToEdit: true, 
+  bgColor: '#00BFFF'
+};
 const options = { paginationTotalRenderer: customTotal, sizePerPageList: [ { text: '50', value: 50 }, { text: '100', value: 100 }, { text: '500', value: 500}], showTotal: true };
 export default class CohortTable extends React.Component{
 
@@ -45,7 +51,6 @@ export default class CohortTable extends React.Component{
     render() {
    
         let  columns = [
-                    {dataField: 'PhenomeCentralSampleID', text: 'PCID', sort: true,editable: true,editor: {type: Type.TEXT}, filter: textFilter(), headerStyle: (colum, colIndex) => {return { width: '150px', textAlign: 'center' }; }},
                     {dataField: 'SampleID', text:'Sample ID',sort: true, editable: true,editor: {type: Type.TEXT}, filter: textFilter(), headerStyle: (colum, colIndex) => {return { width: '150px', textAlign: 'center' }; }, 
                         validator: (newValue,row,column,done) => {
                                     if(newValue.indexOf("_") <=1){
@@ -62,20 +67,21 @@ export default class CohortTable extends React.Component{
     
 
                     },
+                    {dataField: 'PhenomeCentralSampleID', text: 'PCID', sort: true,editable: true,editor: {type: Type.TEXT}, filter: textFilter(), headerStyle: (colum, colIndex) => {return { width: '150px', textAlign: 'center' }; }},
                     {dataField: 'AssignedTo', text:'Assigned to',sort: true, editable: true, filter: textFilter(), headerStyle: (colum, colIndex) => {return { width: '150px', textAlign: 'center' }; }, editor: {type: Type.SELECT, options: this.state.userList}},
                     {dataField: 'DatasetType', text:"Dataset",sort: true, editable: true,editor: {type: Type.SELECT, options:  datasets_for_edits}, filter: selectFilter({ options: datasets_for_filters }), headerStyle: (colum, colIndex) => {return { width: '150px', textAlign: 'center' }; }},
                     {dataField: 'TissueType', text:"Tissue",sort: true, editable: true, filter: textFilter(), headerStyle: (colum, colIndex) => {return { width: '150px', textAlign: 'center' }; },editor: {type: Type.TEXT}},
                     {dataField: 'UploadDate', text: 'Upload Date', sort:true, editable: true, editor: {type: Type.TEXT}, headerStyle: (colum, colIndex) => {return { width: '150px', textAlign: 'center' }; }},
                     {dataField: 'SolvedStatus',text: 'Solved?', sort: true, filter: selectFilter({ options: solved_status_for_filters }),headerStyle: (colum, colIndex) => {return { width: '150px', textAlign: 'center' }; }, editor: {type: Type.SELECT, options: solved_status_for_edits}},
                     {dataField: 'AnalysisStatus', text: 'Analysis Status',sort: true, filter: selectFilter({ options: analysis_status_for_filters }), headerStyle: (colum, colIndex) => {return { width: '150px', textAlign: 'center' }; }, editor: {type: Type.SELECT, options: analysis_status_for_edits} },
+                    {dataField: 'Notes', text: 'Notes',sort: true,editable: true,headerStyle: (colum, colIndex) => {return { width: '750px', textAlign: 'center' }; }, editor: {type: Type.TEXT}},
                     {dataField: 'InputFile',text: 'Input file', sort: true, editable: true,headerStyle: (colum, colIndex) => {return { width: '750px', textAlign: 'center' }; },editor: {type: Type.TEXT}},
                     {dataField: 'ResultsBAM', text: 'Result BAM',sort: true,editable: true,headerStyle: (colum, colIndex) => {return { width: '750px', textAlign: 'center' }; }, editor: {type: Type.TEXT}},
-                    {dataField: 'Notes', text: 'Notes',sort: true,editable: true,headerStyle: (colum, colIndex) => {return { width: '750px', textAlign: 'center' }; }, editor: {type: Type.TEXT}},
         ];
     return  (
 
         <div style = {divStyle}>
-        <ToolkitProvider  data={ this.props.samples } columns={ columns }  keyField='id'> 
+        <ToolkitProvider  data={this.props.samples} columns={ columns }  keyField='id'> 
                 {
                     props => (
                     <div>
@@ -83,6 +89,7 @@ export default class CohortTable extends React.Component{
                     noDataIndication="..." { ...props.baseProps }  
                     pagination={  paginationFactory(options) } 
                     filter={ filterFactory() } 
+                    selectRow={selectRow}
                     cellEdit={  cellEditFactory({ 
                                                 mode: 'dbclick',
                                                 blurToSave: true,
