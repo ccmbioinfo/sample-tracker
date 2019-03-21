@@ -19,6 +19,7 @@ class User(UserMixin, db.Model) :
     email = db.Column(db.String(150), unique=True, nullable=False)
     accessLevel = db.Column(db.Enum(AccessLevel), default='Regular')
     updateUsers = db.relationship('AnalysisStatus',backref='user',lazy='dynamic')
+    projectUsers = db.relationship('Projects2Users',backref='user',lazy='dynamic')
 
     def check_password(self, password):
         return check_password_hash(self.password, password)
@@ -39,11 +40,26 @@ class Sample(db.Model):
     PhenomeCentralSampleID = db.Column(db.String(45))
     samples = db.relationship("Dataset", backref='sample', lazy='dynamic')
 
+class Project(db.Model):
+
+    ProjectID = db.Column(db.Integer, primary_key=True)
+    ProjectName = db.Column(db.String(100), nullable=False, unique=True)
+    ProjectDescription = db.Column(db.Text)
+    projects2Cohort = db.relationship('Cohort', backref='project',lazy='dynamic')
+    projects2User = db.relationship('Projects2Users', backref='project',lazy='dynamic')
+
+class Projects2Users(db.Model):
+    
+    __tablename__ = "projects2Users"
+    ProjectID = db.Column(db.Integer,db.ForeignKey('project.ProjectID',onupdate="cascade",ondelete="restrict"), primary_key = True)
+    userID  = db.Column(db.Integer, db.ForeignKey('user.id',onupdate="cascade",ondelete="restrict"), primary_key = True)
+
 class Cohort(db.Model):
 
     CohortID = db.Column(db.Integer, primary_key=True)
     CohortName = db.Column(db.String(100), nullable=False, unique=True)
     CohortDescription = db.Column(db.Text)
+    ProjectID = db.Column(db.Integer,db.ForeignKey('project.ProjectID',onupdate="cascade",ondelete="restrict"))
     cohorts2Data = db.relationship('Dataset2Cohort', backref='cohort',lazy='dynamic')
     cohorts2Dataset = db.relationship('Dataset', backref='cohort',lazy='dynamic')
 

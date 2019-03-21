@@ -186,7 +186,7 @@ export default class SampleTable extends React.Component {
 					<FormControl  bsSize="sm" componentClass="select" placeholder="select" onChange={this.handleActionSelect} value={this.state.actionSelectValue}>
 						<option value=""></option>
 						{Object.keys(actionSelectOptions).map(opt => {
-                                                                        if(opt == 'updateAnalysisStatus' || opt == 'updateSolvedStatus' || opt == 'assignTo'){
+                                                                        if(opt == 'assignTo'){
                                                                          
                                                                             if(this.state.userAccessLevel == 'Admin'){
                                                                                 return (<option key = {opt} value={opt} > {actionSelectOptions[opt]} </option> ); 

@@ -72,31 +72,30 @@ def get_logged_user():
         user_obj['accessLevel'] = current_user.accessLevel.value
         return json.dumps(user_obj)
 
+
 @app.route("/index")
 @login_required
 def index():
+
 	return render_template("index.html",username=current_user.username)
 
 @app.route("/files/uploadTemplate")
 @login_required
 def uploadTemplate():
 
-    if  current_user.accessLevel.value == 'Admin':
-        return send_file(os.path.dirname(app.instance_path)+"/static/files/upload_admin.xls") 
     return send_file(os.path.dirname(app.instance_path)+"/static/files/upload.xls") 
 
 @app.route("/files/updateTemplate")
 @login_required
 def updateTemplate():
 
-    if  current_user.accessLevel.value == 'Admin':
-        return send_file(os.path.dirname(app.instance_path)+"/static/files/update.xls") 
+    return send_file(os.path.dirname(app.instance_path)+"/static/files/update.xls") 
 
 @app.route('/fetch/cohort_list')
 @login_required
 def get_cohorts():
 
-    return json.dumps(fetch_cohorts(current_user.username,current_user.accessLevel.value),default=str)
+    return json.dumps(fetch_cohorts(current_user.id,current_user.accessLevel.value),default=str)
 
 @app.route('/fetch/uploadCenter_list')
 @login_required
@@ -114,21 +113,11 @@ def get_uploadCenterList():
 
     return json.dumps(uploaders,default=str)
 
-@app.route('/fetch/uploadCenterUser_list')
+@app.route('/fetch/uploadUser_permissions')
 @login_required
-def get_uploadCenterUserList():
+def get_uploadUserPermissions():
 
-    uploaders = []
-    query = db.session.query(Uploaders)
-
-    if current_user.accessLevel.value == 'Regular':
-        query  = query.filter(Uploaders.UploadUser==current_user.username)
-
-    results = query.distinct().all() 
-    for uploader in results:
-        uploaders.append(uploader.UploadCenter+":"+uploader.UploadUser)
-
-    return json.dumps(uploaders,default=str)
+    return json.dumps({'permissions': db.session.query(Uploaders).filter(Uploaders.UploadUser==current_user.username).count()},default=str)
 
 @app.route('/fetch/DatasetType')
 @login_required
@@ -173,6 +162,8 @@ def get_userList():
     if current_user.accessLevel.value != 'Regular':
         for userName in query.all():
             users.append(userName[0])
+    else:
+        users.append(current_user.username)
     return json.dumps(users,default=str)
 
 @app.route('/fetchFamilyInfo/<familyID>')
@@ -227,38 +218,69 @@ def fetchAnalysisHistory(analysisID):
 @app.route('/checkAndFetchSampleInformation/<SampleID>')
 @login_required
 def checkAndFetchSampleInformation(SampleID):
-   
-    results = None
-    if  current_user.accessLevel.value == 'Admin':
-        results = db.session.query(Sample,Dataset,Uploaders).join(Dataset).join(Uploaders).filter(Sample.SampleID==SampleID).all()
-    else:
-        subQuery =  db.session.query(Uploaders).filter(Uploaders.UploadUser==current_user.username).subquery()
-        results = db.session.query(Sample,Dataset,Uploaders).join(Dataset).join(Uploaders).filter(Sample.SampleID==SampleID).filter(Uploaders.UploadCenter==subQuery.c.UploadCenter).all()
+
+    results = db.session.query(Sample).filter(Sample.SampleID==SampleID).all() 
+    if current_user.accessLevel.value != 'Admin':
+        if len(results) > 0:
+            if db.session.query(Project,Projects2Users,Cohort,Dataset).join(Projects2Users,Cohort).join(Dataset).filter(Projects2Users.userID==current_user.id).filter(Dataset.SampleID==SampleID).count() == 0:
+                return json.dumps({},default=str)
 
     gender = ''
+    sampleType = ''
     for row in results:
-        if row.Sample.Gender is not None:
-            gender = row.Sample.Gender.value
-        if current_user.accessLevel.value == 'Admin':
-            return json.dumps({'Gender': gender,'SampleType': row.Sample.SampleType,'UploadUser': row.Uploaders.UploadCenter+":"+row.Uploaders.UploadUser},default=str)
-        return json.dumps({'Gender': gender,'SampleType': row.Sample.SampleType},default=str)
+        if row.Gender is not None:
+            gender = row.Gender.value
+        if row.SampleType is not None:
+            sampleType = row.SampleType
+        return json.dumps({'Gender': gender,'SampleType': sampleType},default=str)
     return json.dumps({},default=str)
+
+@app.route('/checkAndFetchProjectInformation/<CohortName>')
+@login_required
+def checkAndFetchProjectInformation(CohortName):
+ 
+    results = db.session.query(Project).join(Cohort).filter(Cohort.CohortName==CohortName).all()
+
+    if current_user.accessLevel.value != 'Admin':
+        if len(results) > 0: 
+            if db.session.query(Project,Projects2Users,Cohort).join(Projects2Users,Cohort).filter(Cohort.CohortName==CohortName).filter(Projects2Users.userID==current_user.id).count() == 0: 
+                return json.dumps({},default=str)
+    ProjectName = '' 
+    for row in results:
+        return json.dumps({'ProjectName': row.ProjectName},default=str)
+    return json.dumps({},default=str)
+
+@app.route('/fetch/projectList')
+@login_required
+def fetchProjectList():
+    
+    projectList = []
+    projectResults = None
+    
+    if current_user.accessLevel.value != 'Admin':
+        projectResults = db.session.query(Project).join(Projects2Users).filter(Projects2Users.userID==current_user.id).all()
+    else:
+        projectResults = db.session.query(Project).all()
+
+    if projectResults is not None:
+        for result in projectResults:
+            projectList.append(result.ProjectName)
+ 
+    return json.dumps(projectList, default=str)
 
 @app.route('/checkIFSampleExists/<SampleID>')
 @login_required
 def checkIFSampleExists(SampleID):
    
-    if current_user.accessLevel.value == 'Regular':
-        return json.dumps({},default=str) 
-    results = db.session.query(Sample).filter(Sample.SampleID==SampleID).all()
-    if len(results) == 1:
-        return json.dumps({'Exists':1},default=str)
-    return json.dumps({'Exists':0},default=str)
+    return json.dumps({'Exists':db.session.query(Sample).filter(Sample.SampleID==SampleID).count()},default=str)
 
 @app.route('/fetch/UploadUserSamples/<CohortName>')
 @login_required
 def get_upload_user_samples(CohortName):
 
+    if CohortName not in fetch_cohorts(current_user.id,current_user.accessLevel.value).values():
+        return json.dumps({'Status': 'Access Error'},default=str)
+ 
     samples = []
     results = db.session.query(Family,Sample,Dataset,Cohort,Uploaders,Analysis,AnalysisStatus).join(Sample).join(Dataset).join(Cohort,Uploaders,Analysis).join(AnalysisStatus).filter(Cohort.CohortName==CohortName).order_by(Dataset.UploadDate.desc()).all()
     addedDatasets = []
@@ -284,10 +306,11 @@ def get_samples_in_cohort(searchterm,searchvalue):
     samples = []
     results = []
 
-    subQuery =  db.session.query(Uploaders).filter(Uploaders.UploadUser==current_user.username).subquery()
+    subQuery =  db.session.query(Project).join(Projects2Users).filter(Projects2Users.userID==current_user.id).subquery()
     cohortbaseQuery = db.session.query(Family,Sample,Dataset,Cohort,Uploaders,Analysis,AnalysisStatus).join(Sample).join(Dataset).join(Cohort,Uploaders,Analysis).join(AnalysisStatus)
+
     if current_user.accessLevel.value == 'Regular':
-        cohortbaseQuery = cohortbaseQuery.filter(Uploaders.UploadCenter==subQuery.c.UploadCenter)
+        cohortbaseQuery = cohortbaseQuery.filter(Cohort.ProjectID==subQuery.c.ProjectID)
 
     if searchterm == 'cohortSelect':
         if searchvalue == 'ALL':
@@ -382,12 +405,11 @@ def get_samples_in_cohort_by_date(dateType,startDate,endDate):
     else:
         endDate = dt.datetime.utcfromtimestamp(time.time()).strftime("%Y-%m-%d")
 
-    subQuery =  db.session.query(Uploaders).filter(Uploaders.UploadUser==current_user.username).subquery()
-    #cohortbaseQuery = db.session.query(Cohort,Cohort2Family,Family,Sample,Dataset,Dataset2Cohort,Uploaders,Analysis,AnalysisStatus).join(Cohort2Family).join(Family).join(Sample).join(Dataset).join(Dataset2Cohort,Uploaders,Analysis).join(AnalysisStatus)
+    subQuery =  db.session.query(Project).join(Projects2Users).filter(Projects2Users.userID==current_user.id).subquery()
     cohortbaseQuery = db.session.query(Family,Sample,Dataset,Cohort,Uploaders,Analysis,AnalysisStatus).join(Sample).join(Dataset).join(Cohort,Uploaders,Analysis).join(AnalysisStatus)
 
     if current_user.accessLevel.value == 'Regular':
-        cohortbaseQuery = cohortbaseQuery.filter(Uploaders.UploadCenter==subQuery.c.UploadCenter)
+        cohortbaseQuery = cohortbaseQuery.filter(Cohort.ProjectID==subQuery.c.ProjectID)
 
     if dateType == 'analysisDate':
         results = cohortbaseQuery.filter(AnalysisStatus.AnalysisStep == 'done').filter(AnalysisStatus.UpdateDate >= startDate).filter(AnalysisStatus.UpdateDate <= endDate).all()
@@ -415,22 +437,27 @@ def checkInputForm(field,value):
 
     if  current_user.accessLevel.value == 'Admin':
         return json.dumps({'Status': 'Success'},default=str) 
-    retValue = 1;
-    existsQuery = ''
-    subQuery =  db.session.query(Uploaders).filter(Uploaders.UploadUser==current_user.username).subquery()
+
     if field == 'FamilyID':
-        existsQuery = db.session.query(Family,Sample,Dataset,Uploaders).join(Sample).join(Dataset).join(Uploaders).filter(Sample.FamilyID==value).filter(Uploaders.UploadCenter!=subQuery.c.UploadCenter)
+        if db.session.query(Sample).filter(Sample.FamilyID==value).count() > 0: #if familyID exists
+            if db.session.query(Project,Projects2Users,Cohort,Dataset,Sample).join(Projects2Users,Cohort).join(Dataset).join(Sample).filter(Projects2Users.userID==current_user.id).filter(Sample.FamilyID==value).count() == 0:
+                return json.dumps({'Status': 'Error'},default=str)
     elif field == 'SampleName':
-        existsQuery = db.session.query(Family,Sample,Dataset,Uploaders).join(Sample).join(Dataset).join(Uploaders).filter(Sample.SampleName==value).filter(Uploaders.UploadCenter!=subQuery.c.UploadCenter)
+        if db.session.query(Sample).filter(Sample.SampleName==value).count() > 0: #if sampleName exists
+            if db.session.query(Project,Projects2Users,Cohort,Dataset,Sample).join(Projects2Users,Cohort).join(Dataset).join(Sample).filter(Projects2Users.userID==current_user.id).filter(Sample.SampleName==value).count() == 0:
+                return json.dumps({'Status': 'Error'},default=str)
+    elif field == 'ProjectName':
+        if db.session.query(Project).filter(Project.ProjectName==value).count() > 0: # if projectName exists
+            if db.session.query(Project,Projects2Users).join(Projects2Users).filter(Project.ProjectName==value).filter(Projects2Users.userID==current_user.id).count() == 0:
+                return json.dumps({'Status': 'Error'},default=str)
     elif field == 'CohortName':
-        existsQuery = db.session.query(Cohort,Dataset2Cohort,Dataset,Uploaders).join(Dataset2Cohort).join(Dataset).join(Uploaders).filter(Cohort.CohortName==value).filter(Uploaders.UploadCenter!=subQuery.c.UploadCenter)
+        if db.session.query(Cohort).filter(Cohort.CohortName==value).count() > 0: #if cohortName exists
+            if db.session.query(Project,Projects2Users,Cohort).join(Projects2Users,Cohort).filter(Projects2Users.userID==current_user.id).filter(Cohort.CohortName==value).count() == 0:
+                return json.dumps({'Status': 'Error'},default=str)
     else:
         return json.dumps({'Status': 'Success'},default=str)
-   
-    if existsQuery.count() == 0:
-        return json.dumps({'Status': 'Success'},default=str)
         
-    return json.dumps({'Status': 'Error'},default=str)
+    return json.dumps({'Status': 'Success'},default=str)
  
 
 @app.route('/checkUpdateSamples',methods=["POST"])
@@ -445,34 +472,37 @@ def checkUpdateSamples():
         return json.dumps({'Error': 'RequestError'},default=str)
     if 'samples' in postObj:
         for sampleRecord in postObj['samples']:
+
             if 'SampleID' in sampleRecord and 'DatasetType' in sampleRecord and 'UploadDate' in sampleRecord:
+                
+                datasetID = -1
                 datasetIDQuery = db.session.query(Dataset,Analysis).join(Analysis).filter(Dataset.SampleID==sampleRecord['SampleID']).filter(Dataset.DatasetType==sampleRecord['DatasetType']).filter(Analysis.RequestedDate==sampleRecord['UploadDate'])
                 if datasetIDQuery.count() != 1: 
                     retStr['Errors'].append("Cannot find dataset matching Sample: "+sampleRecord['SampleID']+" , Type: "+sampleRecord['DatasetType']+", UploadDate: "+sampleRecord['UploadDate'])
                 else:
+
                     dataset = datasetIDQuery.first()
-                    checkAnalysisStatus = db.session.query(AnalysisStatus).filter(AnalysisStatus.AnalysisID==dataset.Analysis.AnalysisID).filter(AnalysisStatus.AnalysisStep=="done").all()
-                    if len(checkAnalysisStatus) == 1:
-                        retStr['Errors'].append("Dataset matching Sample: "+sampleRecord['SampleID']+" , Type: "+sampleRecord['DatasetType']+", UploadDate: "+sampleRecord['UploadDate']+" is already marked as 'done' in the database. Please contact Teja to update it.")
+                    datasetID = dataset.Dataset.DatasetID
+
+                    if current_user.accessLevel.value != 'Admin':
+                        if db.session.query(Project,Projects2Users,Cohort,Dataset).join(Projects2Users,Cohort).join(Dataset).filter(Projects2Users.userID==current_user.id).filter(Dataset.DatasetID==datasetID).count() == 0:
+                            retStr['Errors'].append("You dont have permissions to edit the dataset matching Sample: "+sampleRecord['SampleID']+" , Type: "+sampleRecord['DatasetType']+", UploadDate: "+sampleRecord['UploadDate'])
+                    #checkAnalysisStatus = db.session.query(AnalysisStatus).filter(AnalysisStatus.AnalysisID==dataset.Analysis.AnalysisID).filter(AnalysisStatus.AnalysisStep=="done").all()
+                    #if len(checkAnalysisStatus) == 1:
+                        #retStr['Errors'].append("Dataset matching Sample: "+sampleRecord['SampleID']+" , Type: "+sampleRecord['DatasetType']+", UploadDate: "+sampleRecord['UploadDate']+" is already marked as 'done' in the database. Please contact Teja to update it.")
             else:
                 retStr['Errors'].append("Sample " + SampleID + "is missing some data")  
     else:
         retStr['Errors'].append('No data!')             
     return json.dumps(retStr,default=str)
 
-@app.route('/fetch/cohort/<projectid>/<sampleid>')
+@app.route('/fetch/cohort_stats/<project>')
 @login_required
-def get_sampleinfo_in_cohort(projectid,sampleid):
-
-    results = list(sampleDB[projectid].find({'Sample':sampleid},{'_id':0,'Sample':0,'Status':0,'Bioinf analysis':0,'Family_id':0}))
-    return json.dumps(results,default=str)
-
-@app.route('/fetch/cohort_stats')
-@login_required
-def get_cohort_stats():
+def get_cohort_stats(project):
 
     cohorts = []
-    for cohortID,cohortName in fetch_cohorts(current_user.username,current_user.accessLevel.value).items(): 
+    
+    for cohortID,cohortName in fetch_cohorts(current_user.id,current_user.accessLevel.value,project).items(): 
         tmpObj = {}
         tmpObj['CohortName'] = cohortName
         tmpObj['CohortID'] = cohortID
@@ -549,8 +579,6 @@ def updateAnalysisStatus():
         else:
             return json.dumps(retStr,default=str)
   
-        if  current_user.accessLevel.value == 'Regular': #only Admin level users can updateAnalysisStatus
-            return  json.dumps(retStr,default=str) 
         # check for postObj updateTo values in allowed set
         today = dt.datetime.now().strftime('%Y-%m-%d  %H:%M:%S') 
         updateSuccess = 1
@@ -596,8 +624,6 @@ def updateDatasetFields():
         else:
             return json.dumps(retStr,default=str)
   
-        if  current_user.accessLevel.value == 'Regular': #only Admin level users can updateSolvedStatus
-            return  json.dumps(retStr,default=str) 
         # check for postObj updateTo values in allowed set
         updateSuccess = 1
         if 'datasets' in postObj and 'updateTo' in postObj and 'field' in postObj:
@@ -641,11 +667,11 @@ def addDatasets2Cohort():
 
     else:
         if 'add2NewCohort' in postObj and len(postObj['add2NewCohort']) >=5:
-            if postObj['add2NewCohort'] in fetch_cohorts(current_user.username,current_user.accessLevel.value).values():
+            if postObj['add2NewCohort'] in fetch_cohorts(current_user.id,current_user.accessLevel.value).values():
                 return json.dumps({"Status": "Cohort name already exists. Please enter a new name"},default=str)
             CohortNameTakenbyOtherLab = json.loads(checkInputForm('CohortName',postObj['add2NewCohort']))
             if CohortNameTakenbyOtherLab['Status']!='Success':
-                return json.dumps({"Status": "This cohort name is being used by another lab. Please enter a new name."},default="str")
+                return json.dumps({"Status": "You dont have access to this Cohort. Please enter a new name."},default="str")
         else:
             return json.dumps({"Status": "Cohort name needs to be atleast 5 characters."},default="str")
 
@@ -701,7 +727,11 @@ def insertNewSamplesintoDatabase():
     if 'samples' in sampleObj:
         for sampleRecord in sampleObj['samples']:
             if checkSampleRecordValues(sampleRecord) == False:
-                return json.dumps({'Status': 'Error'},default=str);
+                return json.dumps({'Status': 'Error', 'Reason': 'Some of the samples are missing required columns.'},default=str)
+            retStatus = checkCohortandProjectAccess(current_user.id,current_user.accessLevel.value,sampleRecord)
+            if len(retStatus) > 0: 
+                return json.dumps({'Status': 'Error', 'Reason': retStatus},default=str)
+
     success = 1
     if 'samples' in sampleObj:
         for sampleRecord in sampleObj['samples']:      
@@ -719,8 +749,6 @@ def insertNewSamplesintoDatabase():
                 except:
                     success = 0
                     break
-            if 'CohortName' not in sampleRecord:
-                sampleRecord['CohortName'] = 'Global' #default cohort name 
             existingCohortID = CohortIDExists(sampleRecord['CohortName'])
             try:
                 addDatasetandCohortInformation(**sampleRecord,cohortID=existingCohortID,updateDate=today,userName=current_user.username,userID=current_user.id,accessLevel=current_user.accessLevel.value)
@@ -733,7 +761,7 @@ def insertNewSamplesintoDatabase():
             return json.dumps({"Status":"Success"},default=str)
         except:
             db.session.rollback()
-    return json.dumps({"Status": "Error"},default=str)
+    return json.dumps({"Status": "Error", 'Reason': 'Database commit error!  Please contact Teja!'},default=str)
 
 @app.route('/updateSampleStatus',methods=["POST"])
 @login_required
@@ -751,7 +779,7 @@ def updateSampleStatus():
         for sampleRecord in sampleObj['samples']:
             if checkSampleUpdateRecordValues(sampleRecord) == False:
                 return json.dumps({'Status': 'Error'},default=str)
-  
+ 
     success = 1
     if 'samples' in sampleObj:
         for sampleRecord in sampleObj['samples']:      
@@ -781,9 +809,6 @@ def updateAnalysisFields():
     if request.method == 'POST':
         sampleObj = request.get_json()
     else:
-        return json.dumps(retStr,default=str)
-
-    if current_user.accessLevel.value != 'Admin':
         return json.dumps(retStr,default=str)
 
     success = 1
@@ -816,9 +841,6 @@ def updateSampleFields():
     if request.method == 'POST':
         sampleObj = request.get_json()
     else:
-        return json.dumps(retStr,default=str)
-
-    if current_user.accessLevel.value != 'Admin':
         return json.dumps(retStr,default=str)
 
     success = 1
@@ -882,9 +904,6 @@ def updateCohortFields():
     if request.method == 'POST':
         cohortObj = request.get_json()
     else:
-        return json.dumps(retStr,default=str)
-
-    if current_user.accessLevel.value != 'Admin':
         return json.dumps(retStr,default=str)
 
     success = 1
