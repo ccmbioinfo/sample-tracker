@@ -1,9 +1,11 @@
 import React from "react";
+import {Grid, Row, Col,Form, Button, FormGroup,FormControl,ControlLabel} from 'react-bootstrap';
 import BootstrapTable from 'react-bootstrap-table-next';
 import paginationFactory from 'react-bootstrap-table2-paginator';
 import filterFactory, { textFilter, dateFilter, selectFilter } from 'react-bootstrap-table2-filter';
 import ToolkitProvider, { CSVExport } from 'react-bootstrap-table2-toolkit';
 import cellEditFactory, {Type}  from 'react-bootstrap-table2-editor';
+import ActionModal from './ActionModal';
 import {DATASET_TYPES, ANALYSIS_STATUSES, SOLVED_STATUSES} from './Constants';
 import {FETCH_UPLOAD_USER_SAMPLES, CHECK_IF_SAMPLE_EXISTS,UPDATE_SAMPLE_FIELDS, UPDATE_DATASET_FIELDS,UPDATE_ANALYSIS_STATUS,FETCH_USER_LIST, UPDATE_ANALYSIS_FIELDS} from './Url.jsx';
 
@@ -27,29 +29,135 @@ const customTotal = (from, to, size) => (
                 Showing { from } to { to } of { size } 
             </span>
 );
-const selectRow = {
-  mode: 'checkbox',
-  clickToSelect: true,
-  clickToEdit: true, 
-  bgColor: '#00BFFF'
-};
+
 const options = { paginationTotalRenderer: customTotal, sizePerPageList: [ { text: '50', value: 50 }, { text: '100', value: 100 }, { text: '500', value: 500}], showTotal: true };
+const actionSelectOptions = { "add2Cohort": "Move to a different Cohort", "updateAnalysisStatus": "Update Analysis status","updateSolvedStatus": "Update Solved status", "requestReanalysis": "Request reanalysis", "assignTo": "Assign to user"};
+
 export default class CohortTable extends React.Component{
 
     constructor(props) {
         super(props);
-        this.state={"userList": []}; 
+        this.state={
+                    selectedSamples: [],
+                    selected: [],
+                    showActionSelect: false,
+                    showActionModal: false,
+                    actionSelectValue: '',
+                    "userList": []
+        }; 
         fetch(FETCH_USER_LIST)
         .then(resp => resp.json())
         .then(data => { 
                         let users = [{'value': '', label: ''}];
                         data.forEach((userName) => {users.push({'value':userName,label:userName})});
                         this.setState({"userList": users});
-            });
+        });
+        this.addtoSelected = this.addtoSelected.bind(this);
+        this.addAlltoSelected = this.addAlltoSelected.bind(this);
+        this.handleActionSelect = this.handleActionSelect.bind(this);
+        this.resetSampleTableState = this.resetSampleTableState.bind(this);
     }
+    componentDidUpdate(prevProps,prevState){
 
+        if(prevState.selectedSamples.length != 0 && this.state.selectedSamples.length == 0){
+
+            this.setState({
+
+                showActionSelect: false
+
+            });
+
+        }
+
+    }
+    resetSampleTableState(){
+
+        this.setState({
+
+            selectedSamples: [],
+            selected: [],
+            showActionSelect: false,
+            showActionModal: false,
+            actionSelectValue: ''
+        });
+
+    }
+    handleActionSelect(event){
+
+        if (event.target.value == 'requestReanalysis'){
+
+            let inProgressSamples = this.state.selectedSamples.filter((sample) => sample.analysisStatus.toLowerCase()!='done' && sample.analysisStatus.toLowerCase()!='error').map((sample) => sample.SampleID);
+            if(inProgressSamples.length >0){
+
+                alert('Samples '+inProgressSamples.join(", ")+' are still being anlayzed. You cannot request re-analysis for samples that are still in analysis. Please unselect them.');
+                return 0;
+
+            }
+        }
+        this.setState({
+
+            showActionModal: event.target.value.length >0 ? true : false,
+            actionSelectValue: event.target.value
+
+        });
+    }
+    addtoSelected(row,isSelect){
+
+        console.log(this.state);
+        if(isSelect){
+
+            this.setState({
+                
+                    selectedSamples: [...this.state.selectedSamples,{"SampleID": row.SampleID, "datasetID":row.id, "analysisStatus":row.AnalysisStatus, "analysisID": row.AnalysisID}],
+                    selected: this.state.selected.includes(row.id) ? this.state.selected : [...this.state.selected, row.id],
+                    showActionSelect: true
+            });
+        }
+        else{
+
+            this.setState({
+
+                    selectedSamples: this.state.selectedSamples.filter(dataObj => dataObj.datasetID!=row.id),
+                    selected: this.state.selected.filter(datasetID => datasetID != row.id)
+            });
+
+        }
+
+    }
+    addAlltoSelected(isSelect, rows){
+
+        console.log(this.state);
+        if(isSelect){
+
+            this.setState({ 
+
+                selectedSamples: rows.map(row => { return {"SampleID":row.SampleID,"datasetID": row.id, "analysisStatus":row.AnalysisStatus, "analysisID": row.AnalysisID}}),       
+                selected: rows.map(row => row.id),
+                showActionSelect: true
+            });
+        }
+        else{
+
+             this.setState({
+    
+                selectedSamples: [],
+                selected: [],
+                showActionSelect: false
+            });
+        }
+    
+    }
     render() {
    
+        const selectRow = {
+                mode: 'checkbox',
+                clickToSelect: true,
+                clickToEdit: true, 
+                bgColor: '#00BFFF',
+                onSelect: this.addtoSelected,
+                selected: this.state.selected,
+                onSelectAll: this.addAlltoSelected
+        };
         let  columns = [
                     {dataField: 'SampleID', text:'Sample ID',sort: true, editable: true,editor: {type: Type.TEXT}, filter: textFilter(), headerStyle: (colum, colIndex) => {return { width: '150px', textAlign: 'center' }; }, 
                         validator: (newValue,row,column,done) => {
@@ -81,6 +189,19 @@ export default class CohortTable extends React.Component{
     return  (
 
         <div style = {divStyle}>
+        { this.state.showActionSelect &&
+            <Form horizontal>
+            <Col md={1}>
+                <FormGroup controlId='actionSelect_bottom' bsSize="sm" >
+                    <ControlLabel> With selected samples</ControlLabel>
+                    <FormControl  bsSize="sm" componentClass="select" placeholder="select" onChange={this.handleActionSelect} value={this.state.actionSelectValue}>
+                        <option value=""></option>
+                        {Object.keys(actionSelectOptions).map(opt => { return (<option key = {opt} value={opt} > {actionSelectOptions[opt]} </option> ); } )}
+                    </FormControl>
+                </FormGroup>
+            </Col>
+            </Form>
+            }
         <ToolkitProvider  data={this.props.samples} columns={ columns }  keyField='id'> 
                 {
                     props => (
@@ -150,7 +271,7 @@ export default class CohortTable extends React.Component{
                     )
                 }
             </ToolkitProvider>
-        
+            {this.state.showActionModal && <ActionModal action={this.state.actionSelectValue} actionSelectOptions={actionSelectOptions} selectedSamples = {this.state.selectedSamples} sampleTableReset = {this.resetSampleTableState} />}        
         </div>
     );
   }
