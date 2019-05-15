@@ -135,7 +135,7 @@ export default class CohortStats extends React.Component{
                 </ToolkitProvider>
                 </div>
             </Tab>
-            {this.state.cohorts.map( (cohort,index) => { return (<Tab key={index} eventKey={index+2} title={cohort.CohortName}><div style={divStyle}><CohortTable samples={this.state.samples}/></div></Tab>); }) }
+            {this.state.cohorts.map( (cohort,index) => { return (<Tab key={index} eventKey={index+2} title={cohort.CohortName}><div style={divStyle}><CohortTable samples={this.state.samples} cohortName={cohort.CohortName}/></div></Tab>); }) }
             </Tabs>
             </div>
         );

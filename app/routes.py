@@ -59,6 +59,7 @@ def resetpassword():
 @app.route("/SearchBox")
 @app.route("/CohortStats")
 @app.route("/SampleUploader")
+@app.route("/Adminboard")
 @login_required
 def redirect_to_index():
     return redirect(url_for('index'))
@@ -289,7 +290,7 @@ def get_upload_user_samples(CohortName):
         if row.Dataset.DatasetID in addedDatasets:
             modifyIndex = addedDatasets.index(row.Dataset.DatasetID)
         if modifyIndex == -1:
-            samples.append({'FamilyID': row.Family.FamilyID, 'SampleName': row.Sample.SampleName,'SampleID': row.Sample.SampleID,'TissueType': row.Sample.TissueType, 'PhenomeCentralSampleID': row.Sample.PhenomeCentralSampleID,'InputFile': row.Dataset.InputFile, 'id':row.Dataset.DatasetID, 'DatasetType':row.Dataset.DatasetType,'UploadDate': row.Dataset.UploadDate, 'AnalysisID': row.AnalysisStatus.AnalysisID,'AnalysisDate': row.AnalysisStatus.UpdateDate,'AssignedTo': row.Analysis.AssignedTo, 'SolvedStatus': row.Dataset.SolvedStatus,'Notes': row.Dataset.Notes,'AnalysisStatus': row.AnalysisStatus.AnalysisStep, 'InputFile': row.Dataset.InputFile, 'ResultsDirectory': row.Analysis.ResultsDirectory, 'ResultsBAM': row.Analysis.ResultsBAM});
+            samples.append({'FamilyID': row.Family.FamilyID,'RunID': row.Dataset.RunID, 'SampleName': row.Sample.SampleName,'SampleID': row.Sample.SampleID,'TissueType': row.Sample.TissueType, 'PhenomeCentralSampleID': row.Sample.PhenomeCentralSampleID,'InputFile': row.Dataset.InputFile, 'id':row.Dataset.DatasetID, 'DatasetType':row.Dataset.DatasetType,'UploadDate': row.Dataset.UploadDate, 'AnalysisID': row.AnalysisStatus.AnalysisID,'AnalysisDate': row.AnalysisStatus.UpdateDate,'AssignedTo': row.Analysis.AssignedTo, 'SolvedStatus': row.Dataset.SolvedStatus,'Notes': row.Dataset.Notes,'AnalysisStatus': row.AnalysisStatus.AnalysisStep, 'InputFile': row.Dataset.InputFile, 'ResultsDirectory': row.Analysis.ResultsDirectory, 'ResultsBAM': row.Analysis.ResultsBAM});
             addedDatasets.append(row.Dataset.DatasetID)
         else:
             if row.AnalysisStatus.UpdateDate > samples[modifyIndex]['AnalysisDate']:
@@ -377,7 +378,7 @@ def get_samples_in_cohort(searchterm,searchvalue):
         if row.Dataset.DatasetID in addedDatasets: # if dataset is already added, get its index and check if current analysis date is higher than the previous
             modifyIndex = addedDatasets.index(row.Dataset.DatasetID)
         if modifyIndex == -1:
-            samples.append({'Sample': row.Sample.SampleName,'SampleID': row.Sample.SampleID, 'datasetID':row.Dataset.DatasetID, 'datasetType':row.Dataset.DatasetType,'UploadDate': row.Dataset.UploadDate, 'AnalysisDate': row.AnalysisStatus.UpdateDate, 'AnalysisID': row.AnalysisStatus.AnalysisID, 'Status': row.Dataset.SolvedStatus, 'AnalysisStatus': row.AnalysisStatus.AnalysisStep, 'FamilyID': row.Family.FamilyID, 'AssignedTo': row.Analysis.AssignedTo});
+            samples.append({'Sample': row.Sample.SampleName,'SampleID': row.Sample.SampleID, 'activeCohort': row.Cohort.CohortName, 'datasetID':row.Dataset.DatasetID, 'datasetType':row.Dataset.DatasetType,'UploadDate': row.Dataset.UploadDate, 'AnalysisDate': row.AnalysisStatus.UpdateDate, 'AnalysisID': row.AnalysisStatus.AnalysisID, 'Status': row.Dataset.SolvedStatus, 'AnalysisStatus': row.AnalysisStatus.AnalysisStep, 'FamilyID': row.Family.FamilyID, 'AssignedTo': row.Analysis.AssignedTo});
             addedDatasets.append(row.Dataset.DatasetID)
         else:
             if row.AnalysisStatus.UpdateDate > samples[modifyIndex]['AnalysisDate']:
@@ -421,7 +422,7 @@ def get_samples_in_cohort_by_date(dateType,startDate,endDate):
         if row.Dataset.DatasetID in addedDatasets: # if dataset is already added, get its index and check if current analysis date is higher than the previous
             modifyIndex = addedDatasets.index(row.Dataset.DatasetID)
         if modifyIndex == -1:
-            samples.append({'Sample': row.Sample.SampleName,'SampleID': row.Sample.SampleID, 'datasetID':row.Dataset.DatasetID, 'datasetType':row.Dataset.DatasetType,'UploadDate': row.Dataset.UploadDate, 'AnalysisDate': row.AnalysisStatus.UpdateDate, 'AnalysisID': row.AnalysisStatus.AnalysisID, 'Status': row.Dataset.SolvedStatus, 'AnalysisStatus': row.AnalysisStatus.AnalysisStep, 'FamilyID': row.Family.FamilyID, 'AssignedTo': row.Analysis.AssignedTo});
+            samples.append({'Sample': row.Sample.SampleName,'SampleID': row.Sample.SampleID, 'activeCohort': row.Cohort.CohortName, 'datasetID':row.Dataset.DatasetID, 'datasetType':row.Dataset.DatasetType,'UploadDate': row.Dataset.UploadDate, 'AnalysisDate': row.AnalysisStatus.UpdateDate, 'AnalysisID': row.AnalysisStatus.AnalysisID, 'Status': row.Dataset.SolvedStatus, 'AnalysisStatus': row.AnalysisStatus.AnalysisStep, 'FamilyID': row.Family.FamilyID, 'AssignedTo': row.Analysis.AssignedTo});
             addedDatasets.append(row.Dataset.DatasetID)
         else:
              if row.AnalysisStatus.UpdateDate > samples[modifyIndex]['AnalysisDate']:
@@ -602,7 +603,7 @@ def updateAnalysisStatus():
             db.session.bulk_save_objects(newStatusRows)
             try:
                 db.session.commit()
-                retStr['Status'] = 'Success'
+                retStr['Status'] = 'Updated!'
             except:
                 db.session.rollback()
                 retStr['Status'] = 'Failure'
