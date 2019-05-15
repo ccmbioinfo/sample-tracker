@@ -79,15 +79,15 @@ export default class SampleSelectBox extends React.Component{
 									
                                     <FormGroup controlId="familySelect" bsSize="sm">
                                         <ControlLabel>
-                                            Family ID(s)
+                                            Family ID(s) - multiple values separated by ','
                                         </ControlLabel>
-                                    <FormControl bsSize="sm" type="text" placeholder="Enter Family ID(s) (min 3 characters per ID)" onChange={this.props.fetchSamples} value={this.props.formInput.familySelect}/>
+                                    <FormControl componentClass="textarea" placeholder="Enter Family ID(s) (min 3 characters per ID)" onChange={this.props.fetchSamples} value={this.props.formInput.familySelect}/>
                                     </FormGroup>
 									<FormGroup controlId="sampleSelect" bsSize="sm">
 										<ControlLabel>
-					 						Sample Name(s) 
+					 						Sample Name(s) - multiple values separated by ',' 
 										</ControlLabel>
-											<FormControl bsSize="sm" type="text" placeholder="Enter Sample Name(s) (min 3 characters per name)" onChange={this.props.fetchSamples} value={this.props.formInput.sampleSelect}/>
+											<FormControl componentClass="textarea" placeholder="Enter Sample Name(s) (min 3 characters per name)" onChange={this.props.fetchSamples} value={this.props.formInput.sampleSelect}/>
   									</FormGroup>
                                     <FormGroup controlId="assignedToSelect" bsSize="sm">
                                         <ControlLabel>

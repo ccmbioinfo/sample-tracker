@@ -14,7 +14,7 @@ const { ExportCSVButton } = CSVExport;
 const actionSelectOptions = { "add2Cohort": "Move to a different Cohort", "updateAnalysisStatus": "Update Analysis status","updateSolvedStatus": "Update Solved status", "requestReanalysis": "Request reanalysis", "assignTo": "Assign to user"};
 			      
 const columns = [
-                    { text: 'SampleID', dataField: 'SampleID', hidden: true }, { text: 'DatasetID', dataField: 'datasetID', hidden: true }, { text: 'FamilyID', dataField: 'FamilyID', sort: true, filter: textFilter() }, { text: 'Sample', dataField: 'Sample', sort: true, filter: textFilter(), formatter: (cell, row) => {return ( <SampleLink sampledetails={row} /> ); } }, { text: 'Dataset type', dataField: 'datasetType', sort: true, filter: textFilter() }, { text: 'Date uploaded', dataField: 'UploadDate', sort: true, filter:  textFilter(), }, { text: 'Analysis status', dataField: 'AnalysisStatus', sort: true, filter: textFilter(), formatter: (cell,row) => {return (<AnalysisPopOver sampledetails={row} />);} }, { text: 'Analysis status updated on ', dataField: 'AnalysisDate', sort:true, filter: textFilter() }, { text: 'Solved status', dataField: 'Status', sort: true, filter: textFilter() }, { text: 'Assigned to', dataField: 'AssignedTo', sort: true, filter: textFilter() }
+                    { text: 'SampleID', dataField: 'SampleID', hidden: true }, { text: 'DatasetID', dataField: 'datasetID', hidden: true }, { text: 'Cohort', dataField: 'activeCohort', sort: true, filter: textFilter() }, { text: 'FamilyID', dataField: 'FamilyID', sort: true, filter: textFilter() }, { text: 'Sample', dataField: 'Sample', sort: true, filter: textFilter(), formatter: (cell, row) => {return ( <SampleLink sampledetails={row} /> ); } }, { text: 'Dataset type', dataField: 'datasetType', sort: true, filter: textFilter() }, { text: 'Date uploaded', dataField: 'UploadDate', sort: true, filter:  textFilter(), }, { text: 'Analysis status', dataField: 'AnalysisStatus', sort: true, filter: textFilter(), formatter: (cell,row) => {return (<AnalysisPopOver sampledetails={row} />);} }, { text: 'Analysis status updated on ', dataField: 'AnalysisDate', sort:true, filter: textFilter() }, { text: 'Solved status', dataField: 'Status', sort: true, filter: textFilter() }, { text: 'Assigned to', dataField: 'AssignedTo', sort: true, filter: textFilter() }
                 ];
 
 const customTotal = (from, to, size) => (
@@ -203,7 +203,7 @@ export default class SampleTable extends React.Component {
 			</Col>
 			</Form>
 			}
-            <ToolkitProvider  data={ this.props.samples } columns={ columns }  keyField='datasetID' exportCSV = { { onlyExportSelection: true, exportAll: false } }>
+            <ToolkitProvider  data={ this.props.samples } columns={ columns }  keyField='datasetID' exportCSV>
                 {
                     props => (
                     <div>

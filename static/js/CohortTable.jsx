@@ -1,37 +1,15 @@
 import React from "react";
-import {Grid, Row, Col,Form, Button, FormGroup,FormControl,ControlLabel} from 'react-bootstrap';
-import BootstrapTable from 'react-bootstrap-table-next';
-import paginationFactory from 'react-bootstrap-table2-paginator';
-import filterFactory, { textFilter, dateFilter, selectFilter } from 'react-bootstrap-table2-filter';
-import ToolkitProvider, { CSVExport } from 'react-bootstrap-table2-toolkit';
-import cellEditFactory, {Type}  from 'react-bootstrap-table2-editor';
+import {Checkbox, Grid, Row, Col,Form, Button, FormGroup,FormControl,ControlLabel} from 'react-bootstrap';
 import ActionModal from './ActionModal';
 import {DATASET_TYPES, ANALYSIS_STATUSES, SOLVED_STATUSES} from './Constants';
 import {FETCH_UPLOAD_USER_SAMPLES, CHECK_IF_SAMPLE_EXISTS,UPDATE_SAMPLE_FIELDS, UPDATE_DATASET_FIELDS,UPDATE_ANALYSIS_STATUS,FETCH_USER_LIST, UPDATE_ANALYSIS_FIELDS} from './Url.jsx';
+import { AgGridReact } from 'ag-grid-react';
+import 'ag-grid-community/dist/styles/ag-grid.css';
+import 'ag-grid-community/dist/styles/ag-theme-balham.css';
 
 
-const analysis_status_for_edits = [];
-const analysis_status_for_filters = {};
-ANALYSIS_STATUSES.forEach((analysisStatus) => {analysis_status_for_filters[analysisStatus] = analysisStatus; analysis_status_for_edits.push({value: analysisStatus,label: analysisStatus})});
-
-const solved_status_for_edits = [];
-const solved_status_for_filters = {};
-SOLVED_STATUSES.forEach((solvedStatus) => { solved_status_for_filters[solvedStatus]=solvedStatus; solved_status_for_edits.push({value: solvedStatus,label: solvedStatus})});
-
-const datasets_for_edits = [];
-const datasets_for_filters = {};
-DATASET_TYPES.forEach((solvedStatus) => { datasets_for_filters[solvedStatus]=solvedStatus; datasets_for_edits.push({value: solvedStatus,label: solvedStatus})});
-
-const divStyle = {width: "2550px",fontSize : "0.85em"};
-const customTotal = (from, to, size) => (
-
-            <span className="react-bootstrap-table-pagination-total">
-                Showing { from } to { to } of { size } 
-            </span>
-);
-
-const options = { paginationTotalRenderer: customTotal, sizePerPageList: [ { text: '50', value: 50 }, { text: '100', value: 100 }, { text: '500', value: 500}], showTotal: true };
 const actionSelectOptions = { "add2Cohort": "Move to a different Cohort", "updateAnalysisStatus": "Update Analysis status","updateSolvedStatus": "Update Solved status", "requestReanalysis": "Request reanalysis", "assignTo": "Assign to user"};
+
 
 export default class CohortTable extends React.Component{
 
@@ -48,14 +26,16 @@ export default class CohortTable extends React.Component{
         fetch(FETCH_USER_LIST)
         .then(resp => resp.json())
         .then(data => { 
-                        let users = [{'value': '', label: ''}];
-                        data.forEach((userName) => {users.push({'value':userName,label:userName})});
+                        let users = [];
+                        data.forEach((userName) => {users.push(userName)});
                         this.setState({"userList": users});
         });
         this.addtoSelected = this.addtoSelected.bind(this);
-        this.addAlltoSelected = this.addAlltoSelected.bind(this);
         this.handleActionSelect = this.handleActionSelect.bind(this);
         this.resetSampleTableState = this.resetSampleTableState.bind(this);
+        this.updateValues = this.updateValues.bind(this);
+        this.onGridReady = this.onGridReady.bind(this);
+        this.onBtExport = this.onBtExport.bind(this);
     }
     componentDidUpdate(prevProps,prevState){
 
@@ -69,6 +49,68 @@ export default class CohortTable extends React.Component{
 
         }
 
+    }
+    onGridReady(params){
+            this.gridApi = params.api;
+            this.gridColumnApi = params.columnApi;
+    }
+    onBtExport(){
+        let params = {
+    
+            fileName: this.props.cohortName
+
+        }
+        this.gridApi.exportDataAsCsv(params);
+
+    }
+    updateValues(field, oldValue, newValue, row){
+        
+        let UPDATE_URL = '';
+        if(newValue != oldValue && newValue.length >0){
+
+            let updateObj = { 'updateTo':newValue, 'field': field };
+            if( field == 'AnalysisStatus'){
+
+                updateObj['datasets'] = [{'analysisID': row.AnalysisID}];
+                UPDATE_URL = UPDATE_ANALYSIS_STATUS;
+            }
+            else if (field=='RunID' || field == 'UploadDate' || field == 'SolvedStatus' || field == 'InputFile' || field == 'Notes' || field == 'DatasetType'){
+
+                updateObj['datasets'] = [{'datasetID': row.id}];
+                UPDATE_URL = UPDATE_DATASET_FIELDS;
+            }
+            else if(field == 'AssignedTo' || field == 'ResultsBAM'){
+
+                updateObj['datasets'] = [{'analysisID': row.AnalysisID }];
+                UPDATE_URL = UPDATE_ANALYSIS_FIELDS;
+            }
+            else if(field == 'PhenomeCentralSampleID' || field == "TissueType"){
+
+                updateObj['samples'] = [{'sampleID': row.SampleID}];
+                UPDATE_URL = UPDATE_SAMPLE_FIELDS;
+            }
+            else if(field == 'SampleID'){
+
+                updateObj['samples'] = [{'sampleID': oldValue}];
+                UPDATE_URL = UPDATE_SAMPLE_FIELDS;
+
+            }
+            if(UPDATE_URL.length >0){
+
+                fetch(UPDATE_URL,{
+                method: "post",
+                headers: {
+
+                            'Accept': 'application/json, text/plain, */*',
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': document.getElementById('csrf_token').value
+                },
+                body: JSON.stringify(updateObj)
+                })
+                .then(response =>response.json())
+                .then(data => alert(data.Status));
+            }
+        }
     }
     resetSampleTableState(){
 
@@ -101,15 +143,14 @@ export default class CohortTable extends React.Component{
 
         });
     }
-    addtoSelected(row,isSelect){
-
-        console.log(this.state);
-        if(isSelect){
+    addtoSelected(event){
+    
+        if(event.node.selected == true){
 
             this.setState({
                 
-                    selectedSamples: [...this.state.selectedSamples,{"SampleID": row.SampleID, "datasetID":row.id, "analysisStatus":row.AnalysisStatus, "analysisID": row.AnalysisID}],
-                    selected: this.state.selected.includes(row.id) ? this.state.selected : [...this.state.selected, row.id],
+                    selectedSamples: [...this.state.selectedSamples,{"SampleID": event.node.data.SampleID, "datasetID":event.node.data.id, "analysisStatus":event.node.data.AnalysisStatus, "analysisID": event.node.data.AnalysisID}],
+                    selected: this.state.selected.includes(event.node.data.id) ? this.state.selected : [...this.state.selected, event.node.data.id],
                     showActionSelect: true
             });
         }
@@ -117,162 +158,88 @@ export default class CohortTable extends React.Component{
 
             this.setState({
 
-                    selectedSamples: this.state.selectedSamples.filter(dataObj => dataObj.datasetID!=row.id),
-                    selected: this.state.selected.filter(datasetID => datasetID != row.id)
+                    selectedSamples: this.state.selectedSamples.filter(dataObj => dataObj.datasetID!=event.node.data.id),
+                    selected: this.state.selected.filter(datasetID => datasetID != event.node.data.id)
             });
 
         }
 
-    }
-    addAlltoSelected(isSelect, rows){
-
-        console.log(this.state);
-        if(isSelect){
-
-            this.setState({ 
-
-                selectedSamples: rows.map(row => { return {"SampleID":row.SampleID,"datasetID": row.id, "analysisStatus":row.AnalysisStatus, "analysisID": row.AnalysisID}}),       
-                selected: rows.map(row => row.id),
-                showActionSelect: true
-            });
-        }
-        else{
-
-             this.setState({
-    
-                selectedSamples: [],
-                selected: [],
-                showActionSelect: false
-            });
-        }
-    
     }
     render() {
-   
-        const selectRow = {
-                mode: 'checkbox',
-                clickToSelect: true,
-                clickToEdit: true, 
-                bgColor: '#00BFFF',
-                onSelect: this.addtoSelected,
-                selected: this.state.selected,
-                onSelectAll: this.addAlltoSelected
-        };
         let  columns = [
-                    {dataField: 'SampleID', text:'Sample ID',sort: true, editable: true,editor: {type: Type.TEXT}, filter: textFilter(), headerStyle: (colum, colIndex) => {return { width: '150px', textAlign: 'center' }; }, 
-                        validator: (newValue,row,column,done) => {
-                                    if(newValue.indexOf("_") <=1){
-        
-                                        return {
-
-                                            valid: false,
-                                            message: 'SampleID should be in the format FamilyID_SampleName'
-                                                
-                                        };
-
-                                    }
-                        },
-    
-
+                    {field: 'SampleID', headerName:'Sample ID',headerCheckboxSelection: true, headerCheckboxSelectionFilteredOnly: true,sortable: true,filter: true,checkboxSelection: true, editable: true, pinned: 'left', cellClass: "lock-pinned",lockPinned: true, resizable: true, filter:'agTextColumnFilter', width: 250, 
+                        onCellValueChanged: ({oldValue, newValue, data}) => {this.updateValues('SampleID', oldValue, newValue,data); }
+                    }, 
+                    {field: 'PhenomeCentralSampleID', headerName: 'PCID', sortable: true,filter: true, editable: true, resizable: true, filter:'agTextColumnFilter',width: 100,
+                        onCellValueChanged: ({oldValue, newValue, data}) => {this.updateValues('PhenomeCentralSampleID', oldValue, newValue,data); }
                     },
-                    {dataField: 'PhenomeCentralSampleID', text: 'PCID', sort: true,editable: true,editor: {type: Type.TEXT}, filter: textFilter(), headerStyle: (colum, colIndex) => {return { width: '150px', textAlign: 'center' }; }},
-                    {dataField: 'AssignedTo', text:'Assigned to',sort: true, editable: true, filter: textFilter(), headerStyle: (colum, colIndex) => {return { width: '150px', textAlign: 'center' }; }, editor: {type: Type.SELECT, options: this.state.userList}},
-                    {dataField: 'DatasetType', text:"Dataset",sort: true, editable: true,editor: {type: Type.SELECT, options:  datasets_for_edits}, filter: selectFilter({ options: datasets_for_filters }), headerStyle: (colum, colIndex) => {return { width: '150px', textAlign: 'center' }; }},
-                    {dataField: 'TissueType', text:"Tissue",sort: true, editable: true, filter: textFilter(), headerStyle: (colum, colIndex) => {return { width: '150px', textAlign: 'center' }; },editor: {type: Type.TEXT}},
-                    {dataField: 'UploadDate', text: 'Upload Date', sort:true, editable: true, editor: {type: Type.TEXT}, headerStyle: (colum, colIndex) => {return { width: '150px', textAlign: 'center' }; }},
-                    {dataField: 'SolvedStatus',text: 'Solved?', sort: true, filter: selectFilter({ options: solved_status_for_filters }),headerStyle: (colum, colIndex) => {return { width: '150px', textAlign: 'center' }; }, editor: {type: Type.SELECT, options: solved_status_for_edits}},
-                    {dataField: 'AnalysisStatus', text: 'Analysis Status',sort: true, filter: selectFilter({ options: analysis_status_for_filters }), headerStyle: (colum, colIndex) => {return { width: '150px', textAlign: 'center' }; }, editor: {type: Type.SELECT, options: analysis_status_for_edits} },
-                    {dataField: 'Notes', text: 'Notes',sort: true,editable: true,headerStyle: (colum, colIndex) => {return { width: '750px', textAlign: 'center' }; }, editor: {type: Type.TEXT}},
-                    {dataField: 'InputFile',text: 'Input file', sort: true, editable: true,headerStyle: (colum, colIndex) => {return { width: '750px', textAlign: 'center' }; },editor: {type: Type.TEXT}},
-                    {dataField: 'ResultsBAM', text: 'Result BAM',sort: true,editable: true,headerStyle: (colum, colIndex) => {return { width: '750px', textAlign: 'center' }; }, editor: {type: Type.TEXT}},
+                    {field: 'AssignedTo', headerName:'Assigned to',sortable: true,filter: true, editable: true, resizable: true, filter:'agTextColumnFilter',width: 100, cellEditor: 'agSelectCellEditor', cellEditorParams: {values: this.state.userList},
+                        onCellValueChanged: ({oldValue, newValue, data}) => {this.updateValues('AssignedTo', oldValue, newValue,data); }
+                    } ,
+                    {field: 'DatasetType', headerName:"Dataset",sortable: true,filter: true, editable: true, resizable: true, filter:'agTextColumnFilter',width: 100, cellEditor: 'agSelectCellEditor', cellEditorParams: {values: DATASET_TYPES},
+                        onCellValueChanged: ({oldValue, newValue, data}) => {this.updateValues('DatasetType', oldValue, newValue,data); }
+                    },
+                    {field: 'RunID', headerName: 'Run ID', sortable: true,filter: true, editable: true, resizable: true, filter:'agTextColumnFilter',width: 100,
+                        onCellValueChanged: ({oldValue, newValue, data}) => {this.updateValues('RunID', oldValue, newValue,data); }
+                    }, 
+                    {field: 'TissueType', headerName:"Tissue",sortable: true,filter: true, editable: true, resizable: true, filter:'agTextColumnFilter',width: 100,
+                        onCellValueChanged: ({oldValue, newValue, data}) => {this.updateValues('TissueType', oldValue, newValue,data); }
+                    },
+                    {field: 'UploadDate', headerName: 'Upload Date', sortable:true,filter: true, editable: true, resizable: true, filter:'agTextColumnFilter',width: 100,
+                        onCellValueChanged: ({oldValue, newValue, data}) => {this.updateValues('UploadDate', oldValue, newValue,data); }
+                    }, 
+                    {field: 'SolvedStatus',headerName: 'Solved?', sortable: true,filter: true, editable: true, resizable: true, filter:'agTextColumnFilter',width: 100, cellEditor: 'agSelectCellEditor', cellEditorParams: {values: SOLVED_STATUSES},
+                        onCellValueChanged: ({oldValue, newValue, data}) => {this.updateValues('SolvedStatus', oldValue, newValue,data); }
+                    },
+                    {field: 'AnalysisStatus', headerName: 'Analysis Status',sortable: true,filter: true, editable: true, resizable: true, filter:'agTextColumnFilter',width: 100, cellEditor: 'agSelectCellEditor', cellEditorParams: {values: ANALYSIS_STATUSES},
+                        onCellValueChanged: ({oldValue, newValue, data}) => {this.updateValues('AnalysisStatus', oldValue, newValue,data); }
+                    },
+                    {field: 'Notes', headerName: 'Notes',sortable: true,filter: true, editable: true, resizable: true, filter:'agTextColumnFilter',width: 400,
+                        onCellValueChanged: ({oldValue, newValue, data}) => {this.updateValues('Notes', oldValue, newValue,data); }
+                    },
+                    {field: 'InputFile',headerName: 'Input file', sortable: true,filter: true, editable: true, resizable: true, filter:'agTextColumnFilter',width: 400,
+                        onCellValueChanged: ({oldValue, newValue, data}) => {this.updateValues('InputFile', oldValue, newValue,data); }
+                    } ,
+                    {field: 'ResultsBAM', headerName: 'Result BAM',sortable: true,filter: true, editable: true, resizable: true, filter:'agTextColumnFilter',width: 800,
+                        onCellValueChanged: ({oldValue, newValue, data}) => {this.updateValues('ResultsBAM', oldValue, newValue,data); }
+                    }
         ];
     return  (
 
-        <div style = {divStyle}>
-        { this.state.showActionSelect &&
-            <Form horizontal>
-            <Col md={1}>
-                <FormGroup controlId='actionSelect_bottom' bsSize="sm" >
-                    <ControlLabel> With selected samples</ControlLabel>
-                    <FormControl  bsSize="sm" componentClass="select" placeholder="select" onChange={this.handleActionSelect} value={this.state.actionSelectValue}>
-                        <option value=""></option>
-                        {Object.keys(actionSelectOptions).map(opt => { return (<option key = {opt} value={opt} > {actionSelectOptions[opt]} </option> ); } )}
-                    </FormControl>
-                </FormGroup>
-            </Col>
-            </Form>
-            }
-        <ToolkitProvider  data={this.props.samples} columns={ columns }  keyField='id'> 
-                {
-                    props => (
-                    <div>
-                    <BootstrapTable 
-                    noDataIndication="..." { ...props.baseProps }  
-                    pagination={  paginationFactory(options) } 
-                    filter={ filterFactory() } 
-                    selectRow={selectRow}
-                    cellEdit={  cellEditFactory({ 
-                                                mode: 'dbclick',
-                                                blurToSave: true,
-                                                afterSaveCell: (oldValue, newValue, row, column) => {
-                                                                                            if(newValue != oldValue && newValue.length >0){
-
-                                                                                                let UPDATE_URL = '';    
-                                                                                                let updateObj = { 'updateTo':newValue };
-                                                                                                if(column.dataField == 'AnalysisStatus'){
-                                                                                                    
-                                                                                                    updateObj['datasets'] = [{'analysisID': row.AnalysisID}];
-                                                                                                    UPDATE_URL = UPDATE_ANALYSIS_STATUS;
-                                                                                                }
-                                                                                                else if (column.dataField == 'UploadDate' || column.dataField == 'SolvedStatus' || column.dataField == 'InputFile' || column.dataField == 'Notes' || column.dataField == 'DatasetType'){
-                                                                                                        
-                                                                                                        updateObj['field'] = column.dataField;       
-                                                                                                        updateObj['datasets'] = [{'datasetID': row.id}];
-                                                                                                        UPDATE_URL = UPDATE_DATASET_FIELDS;    
-                                                                                                 }
-                                                                                                 else if(column.dataField == 'AssignedTo' || column.dataField == 'ResultsBAM'){
-                                                                                                
-                                                                                                        updateObj['datasets'] = [{'analysisID': row.AnalysisID }];  
-                                                                                                        updateObj['field'] = column.dataField;          
-                                                                                                        UPDATE_URL = UPDATE_ANALYSIS_FIELDS; 
-                                                                                                 }
-                                                                                                 else if(column.dataField == 'PhenomeCentralSampleID' || column.dataField == "TissueType"){
-
-                                                                                                    updateObj['samples'] = [{'sampleID': row.SampleID}];
-                                                                                                    updateObj['field'] = column.dataField;
-                                                                                                    UPDATE_URL = UPDATE_SAMPLE_FIELDS;
-                                                                                                }
-                                                                                                else if(column.dataField == 'SampleID'){
-
-                                                                                                    updateObj['samples'] = [{'sampleID': oldValue}];
-                                                                                                    updateObj['field'] = column.dataField;
-                                                                                                    UPDATE_URL = UPDATE_SAMPLE_FIELDS;
-
-                                                                                                }
-                                                                                                if(UPDATE_URL.length >0){
-
-                                                                                                    fetch(UPDATE_URL,{
-                                                                                                        method: "post",
-                                                                                                        headers: {
-
-                                                                                                            'Accept': 'application/json, text/plain, */*',
-                                                                                                            'Content-Type': 'application/json',
-                                                                                                            'X-CSRFToken': document.getElementById('csrf_token').value
-                                                                                                        },
-                                                                                                        body: JSON.stringify(updateObj)
-                                                                                                    })
-                                                                                                    .then(response =>response.json())
-                                                                                                    .then(data => alert(data.Status));
-                                                                                                }
-                                                                                              }
-                                                } } ) }
+            <div> 
+                <div style={{width: '100%'}}>
+                    { this.state.showActionSelect &&
+                                <Row>
+                                <form>
+                                    <Col md={2}>
+                                        <FormGroup controlId='actionSelect_bottom' bsSize="sm" >
+                                            <ControlLabel> With selected samples</ControlLabel>
+                                            <FormControl  bsSize="sm" componentClass="select" placeholder="select" onChange={this.handleActionSelect} value={this.state.actionSelectValue}>
+                                                <option value=""></option>
+                                                {Object.keys(actionSelectOptions).map(opt => { return (<option key = {opt} value={opt} > {actionSelectOptions[opt]} </option> ); } )}
+                                            </FormControl>
+                                        </FormGroup>
+                                    </Col>
+                                </form>
+                                </Row>
+                    }
+                </div>
+                <div style={{margin:"10px 0px"}}>
+                    <button onClick={this.onBtExport}>Export to CSV</button>
+                </div>
+                <div className="ag-theme-balham" style={{height: '750px', width: '100%' }} >
+                    <AgGridReact
+                        rowSelection="multiple"
+                        suppressRowClickSelection={true}
+                        columnDefs={columns}
+                        rowData={this.props.samples}
+                        onRowSelected={this.addtoSelected}
+                        stopEditingWhenGridLosesFocus={true}
+                        onGridReady={this.onGridReady}
                     />
-                    </div>
-                    )
-                }
-            </ToolkitProvider>
-            {this.state.showActionModal && <ActionModal action={this.state.actionSelectValue} actionSelectOptions={actionSelectOptions} selectedSamples = {this.state.selectedSamples} sampleTableReset = {this.resetSampleTableState} />}        
-        </div>
+                </div>
+                {this.state.showActionModal && <ActionModal action={this.state.actionSelectValue} actionSelectOptions={actionSelectOptions} selectedSamples = {this.state.selectedSamples} sampleTableReset = {this.resetSampleTableState} />}
+            </div>
     );
   }
 }
