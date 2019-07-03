@@ -512,7 +512,7 @@ def get_cohort_stats(project):
         tmpObj['Families'] = db.session.query(Family).join(Sample).join(Dataset).join(Cohort).filter(Cohort.CohortName==cohortName).distinct().count()
         tmpObj['Samples'] = db.session.query(Dataset.SampleID).join(Cohort).filter(Cohort.CohortName==cohortName).distinct().count()
         tmpObj['pendingSamples']=[]
-        pendingResults = db.session.query(Dataset,Analysis).join(Analysis).filter(Dataset.ActiveCohort==cohortID).filter(Analysis.ResultsDirectory==None).all()
+        pendingResults = db.session.query(Dataset,Analysis).join(Analysis).filter(Dataset.ActiveCohort==cohortID).filter(Analysis.ResultsBAM==None).all()
         for result in pendingResults:
             if result.Dataset.SampleID not in tmpObj['pendingSamples']:
                 tmpObj['pendingSamples'].append(result.Dataset.SampleID)
