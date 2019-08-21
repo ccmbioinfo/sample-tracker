@@ -63,10 +63,7 @@ export default class SampleDetailBox extends React.Component{
 										<ul>
 											<li><b>Type</b>: {dataset.DatasetType}</li>
 											<li><b>Cohorts this dataset belongs to</b>: {dataset.Cohorts.join(", ")}</li>
-											<li><b>Upload date</b>: {dataset.UploadDate}</li>
-											<li><b>Upload status</b>: {dataset.UploadStatus}</li>
-											<li><b>Upload center</b>: {dataset.UploadCenter}</li>
-											<li><b>Upload user</b>: {dataset.UploadUser}</li>
+                                            <li><b>Entered date</b>: {dataset.EnteredDate}</li>
 											<li><b>HPF path</b>: <div style={reducedFont}>{dataset.HPFPath}</div></li>
 											<li><b>Input file</b>: <div style={reducedFont}>{dataset.InputFile}</div></li>
 											<li><b>Run ID</b>: {dataset.RunID}</li>

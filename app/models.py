@@ -66,22 +66,38 @@ class Cohort(db.Model):
 class Dataset(db.Model):
 
     __table_args__ = (
-        db.UniqueConstraint('SampleID','UploadDate','DatasetType', name='unique_sample_datasettype_perdate'),
+        db.UniqueConstraint('SampleID','EnteredDate','DatasetType', name='unique_sample_datasettype_per_entered_date'),
     )
     DatasetID = db.Column(db.Integer, primary_key = True)
     SampleID = db.Column(db.String(50), db.ForeignKey('sample.SampleID', onupdate="cascade",ondelete="restrict"), nullable=False)
-    UploadDate = db.Column(db.Date, nullable=False)
-    UploadID = db.Column(db.Integer,db.ForeignKey('uploaders.UploadID', onupdate="cascade",ondelete="restrict"), nullable=False)
-    UploadStatus = db.Column(db.String(45), nullable=False)
+    EnteredDate = db.Column(db.Date, nullable=True)
+    EnteredBy = db.Column(db.Integer,db.ForeignKey('uploaders.UploadID', onupdate="cascade",ondelete="restrict"), nullable=True)
+    UploadDate = db.Column(db.Date, nullable=True)
+    UploadID = db.Column(db.Integer, nullable=True)
+    UploadStatus = db.Column(db.String(45), nullable=False, default="pending")
     HPFPath = db.Column(db.String(500))
     DatasetType = db.Column(db.String(45), nullable=False)
     SolvedStatus = db.Column(db.String(30), nullable=False)
     InputFile = db.Column(db.Text)
     RunID = db.Column(db.String(45))
+    SendTo = db.Column(db.String(30))
     Notes = db.Column(db.Text)
+    NotesLastUpdatedDate = db.Column(db.Date)
+    NotesLastUpdatedBy = db.Column(db.Integer, db.ForeignKey('user.id', onupdate="cascade",ondelete="restrict"), nullable=True)
     ActiveCohort = db.Column(db.Integer,db.ForeignKey('cohort.CohortID', onupdate="cascade",ondelete="restrict"), nullable=False)
     analyses = db.relationship('Analysis',backref='dataset',lazy='dynamic')
     data2Cohorts = db.relationship('Dataset2Cohort',backref='dataset',lazy='dynamic')
+    dataset2Rnaseq = db.relationship('RNASeqDataset',backref='dataset',lazy='dynamic')
+    uploads = db.relationship('Dataset2Uploaders',backref='dataset',lazy='dynamic')
+
+class Dataset2Uploaders(db.Model):
+
+    __tablename__ = "dataset2Uploaders"
+    uploadID = db.Column(db.Integer, primary_key = True)
+    DatasetID = db.Column(db.Integer, db.ForeignKey('dataset.DatasetID', onupdate="cascade",ondelete="restrict"), primary_key = True, nullable=True)
+    UploadDate = db.Column(db.Date, nullable=True)
+    UploaderID = db.Column(db.Integer,db.ForeignKey('uploaders.UploadID', onupdate="cascade",ondelete="restrict"), nullable=True) 
+    UploadStatus = db.Column(db.String(45), nullable=False, default="pending")
 
 class Dataset2Cohort(db.Model):
 	
@@ -89,15 +105,34 @@ class Dataset2Cohort(db.Model):
 	DatasetID = db.Column(db.Integer, db.ForeignKey('dataset.DatasetID', onupdate="cascade",ondelete="cascade"), nullable=False, primary_key = True)
 	CohortID = db.Column(db.Integer, db.ForeignKey('cohort.CohortID', onupdate="cascade", ondelete="restrict"),  nullable=False, primary_key = True)
 
+class RNASeqDataset(db.Model):
+    
+    __tablename__='rnaSeqDataset'
+    RnaSeqDatasetID = db.Column(db.Integer, primary_key = True)
+    DatasetID = db.Column(db.Integer, db.ForeignKey('dataset.DatasetID', onupdate="cascade",ondelete="cascade"), nullable=False, primary_key = True) 
+    WLNumber = db.Column(db.String(30))
+    TissueType = db.Column(db.String(30))
+    TissueProcessing = db.Column(db.String(30))
+    Condition = db.Column(db.String(30))
+    ExtractionMethod = db.Column(db.String(50))
+    RIN = db.Column(db.Float)
+    DV200 = db.Column(db.Integer)
+    DV200Classification = db.Column(db.String(30))
+    QubitRNAConcentration = db.Column(db.Float)
+    LibraryPrepMethod = db.Column(db.String(30))
+    Sequencer = db.Column(db.String(30))
+
+
 class Uploaders(db.Model):
 
-	__table_args__ = (
-		db.UniqueConstraint('UploadCenter','UploadUser',name='unique_center_user'),
-	)
-	UploadID = db.Column(db.Integer, primary_key = True)
-	UploadCenter = db.Column(db.String(100), nullable=False)
-	UploadUser = db.Column(db.String(100), nullable=False)
-	uploaders = db.relationship('Dataset',backref='uploaders',lazy='dynamic')
+    __table_args__ = (
+        db.UniqueConstraint('UploadCenter','UploadUser',name='unique_center_user'),
+    )
+    UploadID = db.Column(db.Integer, primary_key = True)
+    UploadCenter = db.Column(db.String(100), nullable=False)
+    UploadUser = db.Column(db.String(100), nullable=False)
+    uploadBy = db.relationship('Dataset2Uploaders',backref='uploaders',lazy='dynamic')
+    enteredBy = db.relationship('Dataset',backref='uploaders',lazy='dynamic')
 
 class Analysis(db.Model):
 

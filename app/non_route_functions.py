@@ -71,7 +71,7 @@ def checkCohortandProjectAccess(userid,accessLevel,sampleRow):
 
 def checkSampleUpdateRecordValues(sampleRow):
     
-    reqFields = ['SampleID','DatasetType','UploadDate','Status']
+    reqFields = ['SampleID','DatasetType','EnteredDate','Status']
     for field in reqFields:
         if field not in sampleRow:
             return False
@@ -101,7 +101,7 @@ def updateSampleStatusinDB(**sampleRecord):
         raise Exception('SampleID doesnt exist')
    
     analysisID = -1
-    datasetExistsQuery = db.session.query(Dataset,Analysis).join(Analysis).filter(Dataset.SampleID==sampleRecord['SampleID']).filter(Dataset.DatasetType==sampleRecord['DatasetType']).filter(Analysis.RequestedDate==sampleRecord['UploadDate']).order_by(desc(Analysis.AnalysisID)).limit(1)
+    datasetExistsQuery = db.session.query(Dataset,Analysis).join(Analysis).filter(Dataset.SampleID==sampleRecord['SampleID']).filter(Dataset.DatasetType==sampleRecord['DatasetType']).filter(Analysis.RequestedDate==sampleRecord['EnteredDate']).order_by(desc(Analysis.AnalysisID)).limit(1)
   
     if datasetExistsQuery.count() != 1:
         raise Exception('DatasetID doesnt exist')
@@ -165,7 +165,7 @@ def addDatasetandCohortInformation(**sampleRow):
     newDataset2CohortID = None
     uploadID = -1
 
-    sampleRow['uploadDate'] = dt.datetime.now().strftime('%Y-%m-%d')
+    sampleRow['enteredDate'] = dt.datetime.now().strftime('%Y-%m-%d')
 
     if 'Notes' not in sampleRow:
         sampleRow['Notes'] = None
@@ -191,7 +191,13 @@ def addDatasetandCohortInformation(**sampleRow):
         newProjectUser = Projects2Users(userID=sampleRow['userID'])
         newProject.projects2User.append(newProjectUser)
 
-    newDataset = None    
+    newDataset = None  
+    notes_user_id=None
+    notes_date=None
+  
+    if len(sampleRow['Notes']) !=0:
+        notes_user_id=sampleRow['userID']
+        notes_date=sampleRow['enteredDate'] 
     if sampleRow['cohortID'] == -1:
         # if the cohort name doesnt exist - add row to Cohort and Dataset2Cohort table
         if projectID != -1:
@@ -201,14 +207,14 @@ def addDatasetandCohortInformation(**sampleRow):
             newProject.projects2Cohort.append(newCohort)
         newDataset2CohortID=Dataset2Cohort()
         newCohort.cohorts2Data.append(newDataset2CohortID)
-        newDataset = Dataset(DatasetID=None,SampleID=sampleRow['SampleID'],UploadDate=sampleRow['uploadDate'],UploadStatus='Complete',UploadID=uploadID,DatasetType=sampleRow['DatasetType'],SolvedStatus='Unsolved',RunID=sampleRow['RunID'],Notes=sampleRow['Notes'])
+        newDataset = Dataset(DatasetID=None,SampleID=samplRow['SampleID'],EnteredDate=sampleRow['enteredDate'],UploadStatus='Complete',UploadID=uploadID,EnteredBy=uploadID,DatasetType=sampleRow['DatasetType'],SolvedStatus='Unsolved',RunID=sampleRow['RunID'],Notes=sampleRow['Notes'],NotesLastUpdatedBy=notes_user_id,NotesLastUpdatedDate=notes_date)
         newCohort.cohorts2Dataset.append(newDataset)
     else:
         # if cohortID exists already
         newDataset2CohortID = Dataset2Cohort(CohortID=sampleRow['cohortID'])
-        newDataset = Dataset(SampleID=sampleRow['SampleID'],UploadDate=sampleRow['uploadDate'],UploadStatus='Complete',UploadID=uploadID,DatasetType=sampleRow['DatasetType'],SolvedStatus='Unsolved',RunID=sampleRow['RunID'],Notes=sampleRow['Notes'],ActiveCohort=sampleRow['cohortID'])
+        newDataset = Dataset(SampleID=sampleRow['SampleID'],EnteredDate=sampleRow['enteredDate'],UploadStatus='Complete',UploadID=uploadID,EnteredBy=uploadID,DatasetType=sampleRow['DatasetType'],SolvedStatus='Unsolved',RunID=sampleRow['RunID'],Notes=sampleRow['Notes'],ActiveCohort=sampleRow['cohortID'],NotesLastUpdatedBy=notes_user_id,NotesLastUpdatedDate=notes_date)
    
-    newAnalysis = Analysis(RequestedDate=sampleRow['uploadDate'])
+    newAnalysis = Analysis(RequestedDate=sampleRow['enteredDate'])
     newAnalysisStatus = AnalysisStatus(AnalysisStep='pending',UpdateDate=sampleRow['updateDate'],UpdateUser=sampleRow['userID'])   
 
     newDataset.data2Cohorts.append(newDataset2CohortID)
