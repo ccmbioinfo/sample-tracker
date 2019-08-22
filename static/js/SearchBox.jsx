@@ -4,6 +4,7 @@ import SampleTable from "./SampleTable";
 import ProjectStats from "./ProjectStats";
 import { Glyphicon, Panel, Grid, Row, Col,Jumbotron,Button } from 'react-bootstrap';
 import {FETCH_PIPELINE_VERSIONS, FETCH_DATASET_TYPE, FETCH_COHORT_LIST, SEARCH_COHORT, FETCH_STATS, SEARCH_COHORT_BY_DATE, FETCH_UPLOAD_CENTER_LIST, FETCH_UPLOAD_USER_LIST } from "./Url.jsx";
+import {DATASET_TYPES} from "./Constants.jsx";
 
 // values for frominputs object must match FromGroup ControlIds in SampleSelectBox Component
 export const forminputs = {
@@ -190,7 +191,7 @@ export default class SearchBox extends React.Component{
 
 		return(
 			<div>
-			<SampleSelectBox clearSamples={this.resetSampleState} projects = {this.state.projects} pipelineVersions={this.state.pipelineVersions} datasetType={this.state.datasetType} uploadCenters={this.state.uploadCenters} uploadUsers ={this.state.uploadUsers} formInput = {this.state.forminput} fetchSamples={this.fetchSamples} fetchSamplesbyDates={this.fetchSamplesbyDates} />
+			<SampleSelectBox clearSamples={this.resetSampleState} projects = {this.state.projects} pipelineVersions={this.state.pipelineVersions} datasetType={DATASET_TYPES} uploadCenters={this.state.uploadCenters} uploadUsers ={this.state.uploadUsers} formInput = {this.state.forminput} fetchSamples={this.fetchSamples} fetchSamplesbyDates={this.fetchSamplesbyDates} />
 			<Panel bsStyle="primary" id='results-table-1' defaultExpanded>
 			<Panel.Heading>
 				<Panel.Title toggle>
