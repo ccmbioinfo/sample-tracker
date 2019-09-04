@@ -32,7 +32,6 @@ export default class CohortStats extends React.Component{
     handleSelect(key){
 
         this.setState({ key:key,samples:[] });
-
         if(key>1){
 
             fetch(FETCH_UPLOAD_USER_SAMPLES+"/"+this.state.cohorts[key-2].CohortName)

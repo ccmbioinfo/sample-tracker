@@ -21,7 +21,7 @@ export default class CohortTable extends React.Component{
                     showActionSelect: false,
                     showActionModal: false,
                     actionSelectValue: '',
-                    "userList": []
+                    "userList": [],
         }; 
         fetch(FETCH_USER_LIST)
         .then(resp => resp.json())
@@ -36,6 +36,13 @@ export default class CohortTable extends React.Component{
         this.updateValues = this.updateValues.bind(this);
         this.onGridReady = this.onGridReady.bind(this);
         this.onBtExport = this.onBtExport.bind(this);
+    }
+    componentDidMount(){
+    
+        fetch(FETCH_UPLOAD_USER_SAMPLES+"/"+this.props.cohortName)
+            .then((resp) => resp.json())
+            .then((data)=> this.setState({ samples: data}));
+
     }
     componentDidUpdate(prevProps,prevState){
 
@@ -74,7 +81,7 @@ export default class CohortTable extends React.Component{
                 updateObj['datasets'] = [{'analysisID': row.AnalysisID}];
                 UPDATE_URL = UPDATE_ANALYSIS_STATUS;
             }
-            else if (field=='RunID' || field == 'UploadDate' || field == 'SolvedStatus' || field == 'InputFile' || field == 'Notes' || field == 'DatasetType'){
+            else if (field=='RunID' || field == 'EnteredDate' || field == 'SolvedStatus' || field == 'InputFile' || field == 'Notes' || field == 'DatasetType' || field == 'SendTo'){
 
                 updateObj['datasets'] = [{'datasetID': row.id}];
                 UPDATE_URL = UPDATE_DATASET_FIELDS;
@@ -108,7 +115,7 @@ export default class CohortTable extends React.Component{
                 body: JSON.stringify(updateObj)
                 })
                 .then(response =>response.json())
-                .then(data => alert(data.Status));
+                .then(data =>alert(data.Status));
             }
         }
     }
@@ -185,8 +192,8 @@ export default class CohortTable extends React.Component{
                     {field: 'TissueType', headerName:"Tissue",sortable: true,filter: true, editable: true, resizable: true, filter:'agTextColumnFilter',width: 100,
                         onCellValueChanged: ({oldValue, newValue, data}) => {this.updateValues('TissueType', oldValue, newValue,data); }
                     },
-                    {field: 'UploadDate', headerName: 'Upload Date', sortable:true,filter: true, editable: true, resizable: true, filter:'agTextColumnFilter',width: 100,
-                        onCellValueChanged: ({oldValue, newValue, data}) => {this.updateValues('UploadDate', oldValue, newValue,data); }
+                    {field: 'EnteredDate', headerName: 'Entered Date', sortable:true,filter: true, editable: true, resizable: true, filter:'agTextColumnFilter',width: 130,
+                        onCellValueChanged: ({oldValue, newValue, data}) => {this.updateValues('EnteredDate', oldValue, newValue,data); }
                     }, 
                     {field: 'SolvedStatus',headerName: 'Solved?', sortable: true,filter: true, editable: true, resizable: true, filter:'agTextColumnFilter',width: 100, cellEditor: 'agSelectCellEditor', cellEditorParams: {values: SOLVED_STATUSES},
                         onCellValueChanged: ({oldValue, newValue, data}) => {this.updateValues('SolvedStatus', oldValue, newValue,data); }
@@ -194,7 +201,10 @@ export default class CohortTable extends React.Component{
                     {field: 'AnalysisStatus', headerName: 'Analysis Status',sortable: true,filter: true, editable: true, resizable: true, filter:'agTextColumnFilter',width: 100, cellEditor: 'agSelectCellEditor', cellEditorParams: {values: ANALYSIS_STATUSES},
                         onCellValueChanged: ({oldValue, newValue, data}) => {this.updateValues('AnalysisStatus', oldValue, newValue,data); }
                     },
-                    {field: 'Notes', headerName: 'Notes',sortable: true,filter: true, editable: true, resizable: true, filter:'agTextColumnFilter',width: 400,
+                    {field: 'SendTo', headerName: 'Send results to',sortable: true,filter: true, editable: true, resizable: true, filter:'agTextColumnFilter',width: 150,
+                        onCellValueChanged: ({oldValue, newValue, data}) => {this.updateValues('SendTo', oldValue, newValue,data); }
+                    },
+                    {field: 'Notes', headerName: 'Notes',sortable: true,filter: true, editable: true, resizable: true, filter:'agTextColumnFilter',width: 400,  tooltipField:'NotesInfo',
                         onCellValueChanged: ({oldValue, newValue, data}) => {this.updateValues('Notes', oldValue, newValue,data); }
                     },
                     {field: 'InputFile',headerName: 'Input file', sortable: true,filter: true, editable: true, resizable: true, filter:'agTextColumnFilter',width: 400,
@@ -202,7 +212,7 @@ export default class CohortTable extends React.Component{
                     } ,
                     {field: 'ResultsBAM', headerName: 'Result BAM',sortable: true,filter: true, editable: true, resizable: true, filter:'agTextColumnFilter',width: 800,
                         onCellValueChanged: ({oldValue, newValue, data}) => {this.updateValues('ResultsBAM', oldValue, newValue,data); }
-                    }
+                    },
         ];
     return  (
 
@@ -230,6 +240,7 @@ export default class CohortTable extends React.Component{
                 <div className="ag-theme-balham" style={{height: '750px', width: '100%' }} >
                     <AgGridReact
                         rowSelection="multiple"
+                        enableBrowserTooltips={true}
                         suppressRowClickSelection={true}
                         columnDefs={columns}
                         rowData={this.props.samples}

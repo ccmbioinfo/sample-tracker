@@ -13,7 +13,7 @@ export default class SampleSelectBox extends React.Component{
 		this.state = {
       				startDate: null,
 				endDate: null,
-				radioDate: 'uploadDate'
+				radioDate: 'enteredDate'
    		};
     		this.handleStartDate = this.handleStartDate.bind(this);
 		this.handleEndDate = this.handleEndDate.bind(this);
@@ -51,7 +51,7 @@ export default class SampleSelectBox extends React.Component{
 		 this.setState({
 			startDate: null,
 			endDate: null,
-			radioDate: 'uploadDate'
+			radioDate: 'enteredDate'
 		});
 		this.props.clearSamples();
 
@@ -61,34 +61,11 @@ export default class SampleSelectBox extends React.Component{
 				<Grid>
 				<Row>
 					<Col md={6} lg={6} mdOffset={3} lgOffset={3}>	
-						<PanelGroup accordion id='search-form-1' defaultActiveKey="1" onSelect={this.clearAll}>
+						<PanelGroup accordion id='search-form-1' defaultActiveKey="5" onSelect={this.clearAll}>
 						<Panel bsStyle="primary" eventKey="1">
-						<Panel.Heading><Panel.Title toggle>Search by identifiers</Panel.Title></Panel.Heading>
+						<Panel.Heading><Panel.Title toggle>Search by data types and versions</Panel.Title></Panel.Heading>
 							<Panel.Body collapsible>
-								<Form>
-  									<FormGroup controlId="cohortSelect" bsSize="sm">
-    										<ControlLabel>
-      											Cohort
-    										</ControlLabel>
-      											<FormControl bsSize="sm" componentClass="select" placeholder="select" onChange={this.props.fetchSamples} value={this.props.formInput.cohortSelect}>
-                                                	 					<option value=""></option>
-                                                  	 					<option value="ALL">ALL</option>
-                                                 						{this.props.projects.map( (proj,index) => <option key = {index} value={proj} >{proj}</option> )}
-                                          						</FormControl>
-									</FormGroup>
-									
-                                    <FormGroup controlId="familySelect" bsSize="sm">
-                                        <ControlLabel>
-                                            Family ID(s) - multiple values separated by ','
-                                        </ControlLabel>
-                                    <FormControl componentClass="textarea" placeholder="Enter Family ID(s) (min 3 characters per ID)" onChange={this.props.fetchSamples} value={this.props.formInput.familySelect}/>
-                                    </FormGroup>
-									<FormGroup controlId="sampleSelect" bsSize="sm">
-										<ControlLabel>
-					 						Sample Name(s) - multiple values separated by ',' 
-										</ControlLabel>
-											<FormControl componentClass="textarea" placeholder="Enter Sample Name(s) (min 3 characters per name)" onChange={this.props.fetchSamples} value={this.props.formInput.sampleSelect}/>
-  									</FormGroup>
+                            <Form>
                                     <FormGroup controlId="assignedToSelect" bsSize="sm">
                                         <ControlLabel>
                                             Assigned to
@@ -126,8 +103,8 @@ export default class SampleSelectBox extends React.Component{
                                             </FormControl>
   									</FormGroup>
 								</Form>
-							</Panel.Body>
-						</Panel>
+                            </Panel.Body>
+                        </Panel>
 						<Panel bsStyle="primary" eventKey="2">
 						<Panel.Heading><Panel.Title toggle>Search by sample status</Panel.Title></Panel.Heading>
 							<Panel.Body collapsible>
@@ -195,7 +172,7 @@ export default class SampleSelectBox extends React.Component{
 							<Panel.Body collapsible>
 								<Form>
   									<FormGroup controlId="dateTypeSelect" bsSize="sm">
-										<Radio name="dateType" value='uploadDate' inline checked={this.state.radioDate == 'uploadDate'} onChange={this.setRadioDate} >Uploaded date</Radio>
+										<Radio name="dateType" value='enteredDate' inline checked={this.state.radioDate == 'enteredDate'} onChange={this.setRadioDate} >Entered date</Radio>
 										<Radio name="dateType" value='analysisDate' inline checked={this.state.radioDate == 'analysisDate'} onChange={this.setRadioDate} >Analyzed date</Radio>
 									</FormGroup>
 									<FormGroup controlId="fromdateSelect">
@@ -212,6 +189,36 @@ export default class SampleSelectBox extends React.Component{
   									</FormGroup>
 									
 								</Form>
+							</Panel.Body>
+						</Panel>
+						<Panel bsStyle="primary" eventKey="5">
+						<Panel.Heading><Panel.Title toggle>Search by identifiers</Panel.Title></Panel.Heading>
+							<Panel.Body collapsible>
+								<Form>
+  									<FormGroup controlId="cohortSelect" bsSize="sm">
+    										<ControlLabel>
+      											Cohort
+    										</ControlLabel>
+      											<FormControl bsSize="sm" componentClass="select" placeholder="select" onChange={this.props.fetchSamples} value={this.props.formInput.cohortSelect}>
+                                                	 					<option value=""></option>
+                                                  	 					<option value="ALL">ALL</option>
+                                                 						{this.props.projects.map( (proj,index) => <option key = {index} value={proj} >{proj}</option> )}
+                                          						</FormControl>
+									</FormGroup>
+									
+                                    <FormGroup controlId="familySelect" bsSize="sm">
+                                        <ControlLabel>
+                                            Family ID(s) - multiple values separated by ','
+                                        </ControlLabel>
+                                    <FormControl componentClass="textarea" placeholder="Enter Family ID(s) (min 3 characters per ID)" onChange={this.props.fetchSamples} value={this.props.formInput.familySelect}/>
+                                    </FormGroup>
+									<FormGroup controlId="sampleSelect" bsSize="sm">
+										<ControlLabel>
+					 						Sample Name(s) - multiple values separated by ',' 
+										</ControlLabel>
+											<FormControl componentClass="textarea" placeholder="Enter Sample Name(s) (min 3 characters per name)" onChange={this.props.fetchSamples} value={this.props.formInput.sampleSelect}/>
+  									</FormGroup>
+                                </Form>
 							</Panel.Body>
 						</Panel>
 						</PanelGroup>

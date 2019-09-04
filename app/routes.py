@@ -199,7 +199,7 @@ def fetchDatasets(sampleID):
             analysisDetails = fetchAnalysisHistory(analysisRow.AnalysisID)
             analyses[analysisRow.AnalysisID] = json.loads(analysisDetails)
 
-        datasets.append({"DatasetID":row.Dataset.DatasetID, "Cohorts": cohorts, "Analyses": analyses, "DatasetType": row.Dataset.DatasetType, "UploadDate": row.Dataset.UploadDate, "UploadStatus": row.Dataset.UploadStatus, "UploadCenter": row.Uploaders.UploadCenter, "UploadUser": row.Uploaders.UploadUser, "InputFile": row.Dataset.InputFile, "RunID": row.Dataset.RunID, "HPFPath": row.Dataset.HPFPath, "SolvedStatus": row.Dataset.SolvedStatus,"Notes": row.Dataset.Notes })		
+        datasets.append({"DatasetID":row.Dataset.DatasetID, "Cohorts": cohorts, "Analyses": analyses, "DatasetType": row.Dataset.DatasetType, "EnteredDate": row.Dataset.EnteredDate, "UploadStatus": row.Dataset.UploadStatus, "UploadCenter": row.Uploaders.UploadCenter, "UploadUser": row.Uploaders.UploadUser, "InputFile": row.Dataset.InputFile, "RunID": row.Dataset.RunID, "HPFPath": row.Dataset.HPFPath, "SolvedStatus": row.Dataset.SolvedStatus,"Notes": row.Dataset.Notes })		
     return json.dumps(datasets,default=str)
 
 @app.route('/fetchAnalysisHistory/<analysisID>')
@@ -282,15 +282,25 @@ def get_upload_user_samples(CohortName):
     if CohortName not in fetch_cohorts(current_user.id,current_user.accessLevel.value).values():
         return json.dumps({'Status': 'Access Error'},default=str)
  
+    users = {}    
     samples = []
-    results = db.session.query(Family,Sample,Dataset,Cohort,Uploaders,Analysis,AnalysisStatus).join(Sample).join(Dataset).join(Cohort,Uploaders,Analysis).join(AnalysisStatus).filter(Cohort.CohortName==CohortName).order_by(Dataset.UploadDate.desc()).all()
+    results = db.session.query(Family,Sample,Dataset,Cohort,Uploaders,Analysis,AnalysisStatus).join(Sample).join(Dataset).join(Cohort,Uploaders,Analysis).join(AnalysisStatus).filter(Cohort.CohortName==CohortName).order_by(Dataset.EnteredDate.desc()).all()
     addedDatasets = []
+    
+    for user in db.session.query(User).all():
+        users[str(user.id)] = user.username
+
     for row in results:
         modifyIndex = -1
         if row.Dataset.DatasetID in addedDatasets:
             modifyIndex = addedDatasets.index(row.Dataset.DatasetID)
         if modifyIndex == -1:
-            samples.append({'FamilyID': row.Family.FamilyID,'RunID': row.Dataset.RunID, 'SampleName': row.Sample.SampleName,'SampleID': row.Sample.SampleID,'TissueType': row.Sample.TissueType, 'PhenomeCentralSampleID': row.Sample.PhenomeCentralSampleID,'InputFile': row.Dataset.InputFile, 'id':row.Dataset.DatasetID, 'DatasetType':row.Dataset.DatasetType,'UploadDate': row.Dataset.UploadDate, 'AnalysisID': row.AnalysisStatus.AnalysisID,'AnalysisDate': row.AnalysisStatus.UpdateDate,'AssignedTo': row.Analysis.AssignedTo, 'SolvedStatus': row.Dataset.SolvedStatus,'Notes': row.Dataset.Notes,'AnalysisStatus': row.AnalysisStatus.AnalysisStep, 'InputFile': row.Dataset.InputFile, 'ResultsDirectory': row.Analysis.ResultsDirectory, 'ResultsBAM': row.Analysis.ResultsBAM});
+            notes_info = 'Last updated date and user info not available'
+            if row.Dataset.NotesLastUpdatedBy is not None and row.Dataset.NotesLastUpdatedDate is not None:
+                if str(row.Dataset.NotesLastUpdatedBy) in users:
+                    notes_info = "Last updated by " + users[str(row.Dataset.NotesLastUpdatedBy)] + " on " + str(row.Dataset.NotesLastUpdatedDate) 
+
+            samples.append({'FamilyID': row.Family.FamilyID,'RunID': row.Dataset.RunID, 'SampleName': row.Sample.SampleName,'SampleID': row.Sample.SampleID,'TissueType': row.Sample.TissueType, 'PhenomeCentralSampleID': row.Sample.PhenomeCentralSampleID,'InputFile': row.Dataset.InputFile, 'id':row.Dataset.DatasetID, 'DatasetType':row.Dataset.DatasetType,'EnteredDate': row.Dataset.EnteredDate, 'AnalysisID': row.AnalysisStatus.AnalysisID,'AnalysisDate': row.AnalysisStatus.UpdateDate,'AssignedTo': row.Analysis.AssignedTo, 'SolvedStatus': row.Dataset.SolvedStatus,'Notes': row.Dataset.Notes,'NotesInfo': notes_info,'SendTo': row.Dataset.SendTo,'AnalysisStatus': row.AnalysisStatus.AnalysisStep, 'InputFile': row.Dataset.InputFile, 'ResultsDirectory': row.Analysis.ResultsDirectory, 'ResultsBAM': row.Analysis.ResultsBAM});
             addedDatasets.append(row.Dataset.DatasetID)
         else:
             if row.AnalysisStatus.UpdateDate > samples[modifyIndex]['AnalysisDate']:
@@ -378,7 +388,7 @@ def get_samples_in_cohort(searchterm,searchvalue):
         if row.Dataset.DatasetID in addedDatasets: # if dataset is already added, get its index and check if current analysis date is higher than the previous
             modifyIndex = addedDatasets.index(row.Dataset.DatasetID)
         if modifyIndex == -1:
-            samples.append({'Sample': row.Sample.SampleName,'SampleID': row.Sample.SampleID, 'activeCohort': row.Cohort.CohortName, 'datasetID':row.Dataset.DatasetID, 'datasetType':row.Dataset.DatasetType,'UploadDate': row.Dataset.UploadDate, 'AnalysisDate': row.AnalysisStatus.UpdateDate, 'AnalysisID': row.AnalysisStatus.AnalysisID, 'Status': row.Dataset.SolvedStatus, 'AnalysisStatus': row.AnalysisStatus.AnalysisStep, 'FamilyID': row.Family.FamilyID, 'AssignedTo': row.Analysis.AssignedTo});
+            samples.append({'Sample': row.Sample.SampleName,'SampleID': row.Sample.SampleID, 'activeCohort': row.Cohort.CohortName, 'datasetID':row.Dataset.DatasetID, 'datasetType':row.Dataset.DatasetType,'EnteredDate': row.Dataset.EnteredDate, 'AnalysisDate': row.AnalysisStatus.UpdateDate, 'AnalysisID': row.AnalysisStatus.AnalysisID, 'Status': row.Dataset.SolvedStatus, 'AnalysisStatus': row.AnalysisStatus.AnalysisStep, 'FamilyID': row.Family.FamilyID, 'AssignedTo': row.Analysis.AssignedTo});
             addedDatasets.append(row.Dataset.DatasetID)
         else:
             if row.AnalysisStatus.UpdateDate > samples[modifyIndex]['AnalysisDate']:
@@ -414,15 +424,15 @@ def get_samples_in_cohort_by_date(dateType,startDate,endDate):
 
     if dateType == 'analysisDate':
         results = cohortbaseQuery.filter(AnalysisStatus.AnalysisStep == 'done').filter(AnalysisStatus.UpdateDate >= startDate).filter(AnalysisStatus.UpdateDate <= endDate).all()
-    elif dateType == 'uploadDate':
-        results = cohortbaseQuery.filter(Dataset.UploadStatus == 'complete').filter(Dataset.UploadDate >= startDate).filter(Dataset.UploadDate <=endDate).all()
+    elif dateType == 'enteredDate':
+        results = cohortbaseQuery.filter(Dataset.UploadStatus == 'complete').filter(Dataset.EnteredDate >= startDate).filter(Dataset.EnteredDate <=endDate).all()
     addedDatasets = []
     for row in results:
         modifyIndex = -1
         if row.Dataset.DatasetID in addedDatasets: # if dataset is already added, get its index and check if current analysis date is higher than the previous
             modifyIndex = addedDatasets.index(row.Dataset.DatasetID)
         if modifyIndex == -1:
-            samples.append({'Sample': row.Sample.SampleName,'SampleID': row.Sample.SampleID, 'activeCohort': row.Cohort.CohortName, 'datasetID':row.Dataset.DatasetID, 'datasetType':row.Dataset.DatasetType,'UploadDate': row.Dataset.UploadDate, 'AnalysisDate': row.AnalysisStatus.UpdateDate, 'AnalysisID': row.AnalysisStatus.AnalysisID, 'Status': row.Dataset.SolvedStatus, 'AnalysisStatus': row.AnalysisStatus.AnalysisStep, 'FamilyID': row.Family.FamilyID, 'AssignedTo': row.Analysis.AssignedTo});
+            samples.append({'Sample': row.Sample.SampleName,'SampleID': row.Sample.SampleID, 'activeCohort': row.Cohort.CohortName, 'datasetID':row.Dataset.DatasetID, 'datasetType':row.Dataset.DatasetType,'EnteredDate': row.Dataset.EnteredDate, 'AnalysisDate': row.AnalysisStatus.UpdateDate, 'AnalysisID': row.AnalysisStatus.AnalysisID, 'Status': row.Dataset.SolvedStatus, 'AnalysisStatus': row.AnalysisStatus.AnalysisStep, 'FamilyID': row.Family.FamilyID, 'AssignedTo': row.Analysis.AssignedTo});
             addedDatasets.append(row.Dataset.DatasetID)
         else:
              if row.AnalysisStatus.UpdateDate > samples[modifyIndex]['AnalysisDate']:
@@ -474,12 +484,12 @@ def checkUpdateSamples():
     if 'samples' in postObj:
         for sampleRecord in postObj['samples']:
 
-            if 'SampleID' in sampleRecord and 'DatasetType' in sampleRecord and 'UploadDate' in sampleRecord:
+            if 'SampleID' in sampleRecord and 'DatasetType' in sampleRecord and 'EnteredDate' in sampleRecord:
                 
                 datasetID = -1
-                datasetIDQuery = db.session.query(Dataset,Analysis).join(Analysis).filter(Dataset.SampleID==sampleRecord['SampleID']).filter(Dataset.DatasetType==sampleRecord['DatasetType']).filter(Analysis.RequestedDate==sampleRecord['UploadDate'])
+                datasetIDQuery = db.session.query(Dataset,Analysis).join(Analysis).filter(Dataset.SampleID==sampleRecord['SampleID']).filter(Dataset.DatasetType==sampleRecord['DatasetType']).filter(Analysis.RequestedDate==sampleRecord['EnteredDate'])
                 if datasetIDQuery.count() != 1: 
-                    retStr['Errors'].append("Cannot find dataset matching Sample: "+sampleRecord['SampleID']+" , Type: "+sampleRecord['DatasetType']+", UploadDate: "+sampleRecord['UploadDate'])
+                    retStr['Errors'].append("Cannot find dataset matching Sample: "+sampleRecord['SampleID']+" , Type: "+sampleRecord['DatasetType']+", EnteredDate: "+sampleRecord['EnteredDate'])
                 else:
 
                     dataset = datasetIDQuery.first()
@@ -487,10 +497,7 @@ def checkUpdateSamples():
 
                     if current_user.accessLevel.value != 'Admin':
                         if db.session.query(Project,Projects2Users,Cohort,Dataset).join(Projects2Users,Cohort).join(Dataset).filter(Projects2Users.userID==current_user.id).filter(Dataset.DatasetID==datasetID).count() == 0:
-                            retStr['Errors'].append("You dont have permissions to edit the dataset matching Sample: "+sampleRecord['SampleID']+" , Type: "+sampleRecord['DatasetType']+", UploadDate: "+sampleRecord['UploadDate'])
-                    #checkAnalysisStatus = db.session.query(AnalysisStatus).filter(AnalysisStatus.AnalysisID==dataset.Analysis.AnalysisID).filter(AnalysisStatus.AnalysisStep=="done").all()
-                    #if len(checkAnalysisStatus) == 1:
-                        #retStr['Errors'].append("Dataset matching Sample: "+sampleRecord['SampleID']+" , Type: "+sampleRecord['DatasetType']+", UploadDate: "+sampleRecord['UploadDate']+" is already marked as 'done' in the database. Please contact Teja to update it.")
+                            retStr['Errors'].append("You dont have permissions to edit the dataset matching Sample: "+sampleRecord['SampleID']+" , Type: "+sampleRecord['DatasetType']+", EnteredDate: "+sampleRecord['EnteredDate'])
             else:
                 retStr['Errors'].append("Sample " + SampleID + "is missing some data")  
     else:
@@ -633,6 +640,8 @@ def updateDatasetFields():
                 if 'datasetID' in dataSet:
                     try:
                         db.session.query(Dataset).filter(Dataset.DatasetID==dataSet['datasetID']).update({postObj['field']: postObj['updateTo']})
+                        if postObj['field'] == 'Notes':
+                            db.session.query(Dataset).filter(Dataset.DatasetID==dataSet['datasetID']).update({'NotesLastUpdatedBy': current_user.id,'NotesLastUpdatedDate': dt.datetime.now().strftime('%Y-%m-%d')})
                     except:
                         updateSuccess = 0
                         break
