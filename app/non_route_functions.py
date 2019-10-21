@@ -195,9 +195,11 @@ def addDatasetandCohortInformation(**sampleRow):
     notes_user_id=None
     notes_date=None
   
-    if len(sampleRow['Notes']) !=0:
-        notes_user_id=sampleRow['userID']
-        notes_date=sampleRow['enteredDate'] 
+    if sampleRow['Notes'] is not None:
+        if len(sampleRow['Notes']) !=0:
+            notes_user_id=sampleRow['userID']
+            notes_date=sampleRow['enteredDate'] 
+    
     if sampleRow['cohortID'] == -1:
         # if the cohort name doesnt exist - add row to Cohort and Dataset2Cohort table
         if projectID != -1:
@@ -207,7 +209,7 @@ def addDatasetandCohortInformation(**sampleRow):
             newProject.projects2Cohort.append(newCohort)
         newDataset2CohortID=Dataset2Cohort()
         newCohort.cohorts2Data.append(newDataset2CohortID)
-        newDataset = Dataset(DatasetID=None,SampleID=samplRow['SampleID'],EnteredDate=sampleRow['enteredDate'],UploadStatus='Complete',UploadID=uploadID,EnteredBy=uploadID,DatasetType=sampleRow['DatasetType'],SolvedStatus='Unsolved',RunID=sampleRow['RunID'],Notes=sampleRow['Notes'],NotesLastUpdatedBy=notes_user_id,NotesLastUpdatedDate=notes_date)
+        newDataset = Dataset(DatasetID=None,SampleID=sampleRow['SampleID'],EnteredDate=sampleRow['enteredDate'],UploadStatus='Complete',UploadID=uploadID,EnteredBy=uploadID,DatasetType=sampleRow['DatasetType'],SolvedStatus='Unsolved',RunID=sampleRow['RunID'],Notes=sampleRow['Notes'],NotesLastUpdatedBy=notes_user_id,NotesLastUpdatedDate=notes_date)
         newCohort.cohorts2Dataset.append(newDataset)
     else:
         # if cohortID exists already

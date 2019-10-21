@@ -298,7 +298,8 @@ def get_upload_user_samples(CohortName):
             notes_info = 'Last updated date and user info not available'
             if row.Dataset.NotesLastUpdatedBy is not None and row.Dataset.NotesLastUpdatedDate is not None:
                 if str(row.Dataset.NotesLastUpdatedBy) in users:
-                    notes_info = "Last updated by " + users[str(row.Dataset.NotesLastUpdatedBy)] + " on " + str(row.Dataset.NotesLastUpdatedDate) 
+                    #notes_info = "Last updated by " + users[str(row.Dataset.NotesLastUpdatedBy)] + " on " + str(row.Dataset.NotesLastUpdatedDate) 
+                    notes_info = "Last updated by " + users[str(row.Dataset.NotesLastUpdatedBy)] + " on " + dt.datetime.strptime(str(row.Dataset.NotesLastUpdatedDate),'%Y-%m-%d').strftime('%B %d, %Y')
 
             samples.append({'FamilyID': row.Family.FamilyID,'RunID': row.Dataset.RunID, 'SampleName': row.Sample.SampleName,'SampleID': row.Sample.SampleID,'TissueType': row.Sample.TissueType, 'PhenomeCentralSampleID': row.Sample.PhenomeCentralSampleID,'InputFile': row.Dataset.InputFile, 'id':row.Dataset.DatasetID, 'DatasetType':row.Dataset.DatasetType,'EnteredDate': row.Dataset.EnteredDate, 'AnalysisID': row.AnalysisStatus.AnalysisID,'AnalysisDate': row.AnalysisStatus.UpdateDate,'AssignedTo': row.Analysis.AssignedTo, 'SolvedStatus': row.Dataset.SolvedStatus,'Notes': row.Dataset.Notes,'NotesInfo': notes_info,'SendTo': row.Dataset.SendTo,'AnalysisStatus': row.AnalysisStatus.AnalysisStep, 'InputFile': row.Dataset.InputFile, 'ResultsDirectory': row.Analysis.ResultsDirectory, 'ResultsBAM': row.Analysis.ResultsBAM});
             addedDatasets.append(row.Dataset.DatasetID)
@@ -332,14 +333,12 @@ def get_samples_in_cohort(searchterm,searchvalue):
     elif searchterm == 'familySelect':
         for family_id in searchvalue.split(','):
             family_id = family_id.strip()
-            if len(family_id) >= 3:
-                results.extend(cohortbaseQuery.filter(Family.FamilyID.like(family_id+"%")).all())
+            results.extend(cohortbaseQuery.filter(Family.FamilyID.like(family_id+"%")).all())
     
     elif searchterm == 'sampleSelect':
         for sample_id in searchvalue.split(','):
             sample_id = sample_id.strip()
-            if len(sample_id) >= 3:
-                results.extend(cohortbaseQuery.filter(Sample.SampleName.like(sample_id+"%")).all())
+            results.extend(cohortbaseQuery.filter(Sample.SampleName.like(sample_id+"%")).all())
             #results = cohortbaseQuery.filter(Sample.SampleName==searchvalue).all()
 
     elif searchterm == 'datasetTypeSelect':
