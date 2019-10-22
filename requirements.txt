@@ -1,0 +1,8 @@
+flask
+flask_talisman
+flask_sqlalchemy
+flask_login
+flask_migrate
+flask_wtf
+werkzeug
+pymysql
