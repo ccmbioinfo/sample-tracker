@@ -62,6 +62,18 @@ Then, create the minifi'ed JS bundle using the command
       SQLALCHEMY_DATABASE_URI = 'mysql+pymysql://test:test@localhost/sample_tracker' #replace test:test with the username and password you used to create a new user in mysql.
       SQLALCHEMY_TRACK_MODIFICATIONS=False
   ```
+
+  Now create a directory for downloading gene level reports:
+
+  ```
+    mkdir gene_reports
+    mv ~/2019-12-12.sample_wise.csv ./gene_reports
+    mv ~/2019-12-12.variant_wise.csv ./gene_reports
+  ```
+
+  Sample wise and variant wise reports should contain counts of variants occuring across samples in the cohort. The reports have one requirement --- they must contain a column called "Gene".
+  Python scripts to generate these reports from our typical WES reports are here: https://github.com/dennis-kao/cre/tree/master/gene.database
+
   sample-tracker uses flask-talisman module to https'ise traffic by default, which will not work unless you deploy the website with gunicorn, nginx and with a  proper https keys. Lets comment this module for our test instance to work. 
   
   Open the script ```app/__init__.py``` in your favorite editor and comment out the following lines - To comment lines in python, insert the character '#' at the front of the line as shown below.

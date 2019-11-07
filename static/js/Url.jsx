@@ -31,3 +31,6 @@ export const SEARCH_COHORT_BY_DATE = HOST + '/fetch/search_cohort_by_date';
 export const FETCH_COHORT_STATS = HOST + '/fetch/cohort_stats';
 export const FETCH_USER_LIST = HOST + '/fetch/userList';
 export const FETCH_PROJECT_LIST = HOST + '/fetch/projectList';
+export const FETCH_GENE_LIST = HOST + '/fetch/gene_list';
+export const FETCH_GENE_DB_VERSION = HOST + '/fetch/GENE_DB_VERSION';
+export const DOWNLOAD_GENE_REPORT = HOST + '/download/gene_report';

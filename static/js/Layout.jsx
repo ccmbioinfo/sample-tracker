@@ -2,6 +2,7 @@ import React from "react";
 import SearchBox from "./SearchBox";
 import SampleUploader from "./SampleUploader";
 import CohortStats from "./CohortStats";
+import GeneReports from "./GeneReports";
 import {Navbar, Nav, NavItem, NavDropdown, MenuItem} from 'react-bootstrap';
 import {Link, Route, Redirect} from 'react-router-dom';
 import {LinkContainer} from 'react-router-bootstrap';
@@ -12,10 +13,10 @@ export default class Layout extends React.Component{
 	constructor(props) {
 		super(props);
 		this.state = {
-
-				username: ""
-
-			     };
+			
+			username: "",
+			accessLevel: "",
+		};
         this.logout = this.logout.bind(this);
 	}
 	componentDidMount(){
@@ -25,7 +26,7 @@ export default class Layout extends React.Component{
 		.then((data) => {
 
 					this.setState({ username: data.username});
-			
+					this.setState({ accessLevel: data.accessLevel});
 				}
 			);
 
@@ -61,6 +62,13 @@ export default class Layout extends React.Component{
       						    Upload new samples
     					    </NavItem>
                         </LinkContainer>
+						{this.state.accessLevel === "Admin" &&
+							<LinkContainer to="/GeneReports">
+								<NavItem eventKey={5}>
+									Gene SNV reports
+								</NavItem>
+							</LinkContainer>
+						}
     			</Nav>
                 <Nav pullRight>
     					<NavItem eventKey={4}  onClick={this.logout}>
@@ -77,6 +85,7 @@ export default class Layout extends React.Component{
 				<Route path="/SearchBox" component={SearchBox}/>
                 <Route path = "/CohortStats" component={CohortStats}/>
                 <Route path="/SampleUploader" component={SampleUploader}/>  
+                <Route path="/GeneReports" render={(props) => <GeneReports username={this.state.username}/>}/>  
   			</div>
   		</div>
 
