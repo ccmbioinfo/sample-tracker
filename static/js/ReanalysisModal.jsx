@@ -78,7 +78,7 @@ export default class ReanalysisModal extends React.Component {
             <Table bordered  hover>
             <thead>
                 <tr>
-                    <th> Selected samples </th>
+                    <th> Selected participants </th>
                     <th> Notes for reanalysis</th>
                 </tr>
             </thead>

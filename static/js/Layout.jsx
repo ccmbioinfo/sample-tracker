@@ -54,12 +54,12 @@ export default class Layout extends React.Component{
                         </LinkContainer>
     					<LinkContainer to="/SearchBox">
     						<NavItem eventKey={2} >
-      							Search Samples
+      							Search Participants
     						</NavItem>
     					</LinkContainer>
                         <LinkContainer to="/SampleUploader">
     					    <NavItem eventKey={3}>
-      						    Upload new samples
+      						    Upload new participants
     					    </NavItem>
                         </LinkContainer>
 						{this.state.accessLevel === "Admin" &&

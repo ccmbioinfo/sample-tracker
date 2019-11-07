@@ -106,7 +106,7 @@ export default class SampleSelectBox extends React.Component{
                             </Panel.Body>
                         </Panel>
 						<Panel bsStyle="primary" eventKey="2">
-						<Panel.Heading><Panel.Title toggle>Search by sample status</Panel.Title></Panel.Heading>
+						<Panel.Heading><Panel.Title toggle>Search by participant status</Panel.Title></Panel.Heading>
 							<Panel.Body collapsible>
 								<Form>
   									<FormGroup controlId="analysisSelect" bsSize="sm">
@@ -208,15 +208,15 @@ export default class SampleSelectBox extends React.Component{
 									
                                     <FormGroup controlId="familySelect" bsSize="sm">
                                         <ControlLabel>
-                                            Family ID(s) - multiple values separated by ','
+                                            Family code(s) - multiple values separated by ','
                                         </ControlLabel>
-                                    <FormControl componentClass="textarea" placeholder="Enter Family ID(s)" onChange={this.props.fetchSamples} value={this.props.formInput.familySelect}/>
+                                    <FormControl componentClass="textarea" placeholder="Enter Family code(s)" onChange={this.props.fetchSamples} value={this.props.formInput.familySelect}/>
                                     </FormGroup>
 									<FormGroup controlId="sampleSelect" bsSize="sm">
 										<ControlLabel>
-					 						Sample Name(s) - multiple values separated by ',' 
+					 						Participant code(s) - multiple values separated by ',' 
 										</ControlLabel>
-											<FormControl componentClass="textarea" placeholder="Enter Sample Name(s)" onChange={this.props.fetchSamples} value={this.props.formInput.sampleSelect}/>
+											<FormControl componentClass="textarea" placeholder="Enter Participant code(s)" onChange={this.props.fetchSamples} value={this.props.formInput.sampleSelect}/>
   									</FormGroup>
                                 </Form>
 							</Panel.Body>

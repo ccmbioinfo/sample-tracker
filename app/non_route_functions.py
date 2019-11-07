@@ -19,6 +19,8 @@ def fetch_cohorts(userid,accessLevel='Regular',project='ALL'):
     if project!='ALL':
         cohortQuery = cohortQuery.filter(Project.ProjectName==project)
 
+    cohortQuery = cohortQuery.filter(Cohort.Obsolete=="No")
+
     for result in cohortQuery.all():
         if result.Cohort.CohortID not in cohorts:
             cohorts[result.Cohort.CohortID] = result.Cohort.CohortName
@@ -37,7 +39,7 @@ def check_user_access(userid, datasetArr, accessLevel='Regular'):
 
 def checkSampleRecordValues(sampleRow):
 
-    reqFields = ['FamilyID','SampleName','SampleID','CohortName','ProjectName','DatasetType']
+    reqFields = ['FamilyID','SampleName','SampleID','ProjectName','DatasetType']
     for field in reqFields:
         if field not in sampleRow:
             return False
@@ -50,9 +52,10 @@ def checkCohortandProjectAccess(userid,accessLevel,sampleRow):
     if accessLevel!='Admin':
 
         #if cohort exists and the user doesnt have access to the cohort - return False
-        if db.session.query(Cohort).filter(Cohort.CohortName==sampleRow['CohortName']).count()!=0:
-            if db.session.query(Project,Projects2Users,Cohort).join(Projects2Users,Cohort).filter(Projects2Users.userID==userid).filter(Cohort.CohortName==sampleRow['CohortName']).count() == 0:
-                return 'You dont have access to the cohort '+sampleRow['CohortName']
+        if 'CohortName' in sampleRow:
+            if db.session.query(Cohort).filter(Cohort.CohortName==sampleRow['CohortName']).count()!=0:
+                if db.session.query(Project,Projects2Users,Cohort).join(Projects2Users,Cohort).filter(Projects2Users.userID==userid).filter(Cohort.CohortName==sampleRow['CohortName']).count() == 0:
+                    return 'You dont have access to the cohort '+sampleRow['CohortName']
 
         #if project exists and the user doesnt have access to the project - return False
         if db.session.query(Project).filter(Project.ProjectName==sampleRow['ProjectName']).count()!=0:
@@ -60,11 +63,12 @@ def checkCohortandProjectAccess(userid,accessLevel,sampleRow):
                 return 'You dont have access to the project '+sampleRow['ProjectName']
 
     #if cohort exists but it belongs to a different project - return False
-    cohort_project_query = db.session.query(Project,Cohort).join(Cohort).filter(Cohort.CohortName==sampleRow['CohortName'])
-    if cohort_project_query.count() != 0:
-        result = cohort_project_query.first()
-        if result.Project.ProjectName.upper() != sampleRow['ProjectName'].upper():
-            return 'Cohort '+sampleRow['CohortName']+' does not belong to the project '+ sampleRow['ProjectName']
+    if 'CohortName' in sampleRow:
+        cohort_project_query = db.session.query(Project,Cohort).join(Cohort).filter(Cohort.CohortName==sampleRow['CohortName'])
+        if cohort_project_query.count() != 0:
+            result = cohort_project_query.first()
+            if result.Project.ProjectName.upper() != sampleRow['ProjectName'].upper():
+                return 'Cohort '+sampleRow['CohortName']+' does not belong to the project '+ sampleRow['ProjectName']
 
     #finally return true
     return ''        
@@ -131,6 +135,14 @@ def updateSampleStatusinDB(**sampleRecord):
         newAnalysisStep = AnalysisStatus(AnalysisID=analysisID,AnalysisStep=sampleRecord['Status'],UpdateDate=sampleRecord['updateDate'],UpdateUser=sampleRecord['userID'])
         db.session.add(newAnalysisStep)
 
+def get_default_cohort(project_name):
+
+    default_cohort_name  = None
+    for result in db.session.query(Project,Project2DefaultCohort,Cohort).join(Project2DefaultCohort,Cohort).filter(Project.ProjectName==project_name):
+        default_cohort_name = result.Cohort.CohortName
+    
+    return default_cohort_name
+
 def insertSampleID(**sampleRow):
 
     gender = None
@@ -159,6 +171,10 @@ def CohortIDExists(cohortName):
 
     return cohortID
 
+def check_if_dataset_exists(sample_id, dataset_type):
+
+    return db.session.query(Dataset).filter(Dataset.SampleID==sample_id).filter(Dataset.DatasetType==dataset_type).count()
+        
 def addDatasetandCohortInformation(**sampleRow):
 
     newCohort = None

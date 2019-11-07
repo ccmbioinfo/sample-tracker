@@ -12,16 +12,16 @@ import {DATASET_TYPES} from './Constants';
 const {AutoComplete: AutoCompleteEditor, DropDownEditor } = Editors;
 const {Row} = ReactDataGrid;
 const Genders = ['','Male','Female']; 
-const requiredColumns = {'FamilyID':'Family ID','SampleName': 'Sample name','DatasetType': 'Dataset type','ProjectName':'Project name','CohortName': 'Cohort name'};
+const requiredColumns = {'FamilyID':'Family code','SampleName': 'Participant code','DatasetType': 'Dataset type','ProjectName':'Project name'};
 const AffectedStatuses = ['','Affected','Unaffected'];
 const FamilyDropDown = ['','Proband','Mother','Father','Sibling','Other family member'];
 
 const defaultToolTip = (<Popover id="defaultTip" title="Error">Error!</Popover>);
-const FamilyIDErrorTooltip = (<Popover id="FamilyIDtip" title="Error">You dont have access to this family. Please enter a new FamilyID.</Popover>);
-const SampleErrorTooltip = (<Popover id="SampleNametip" title="Error">You dont have access to this sample name. Please enter a new sample name.</Popover>);
+const FamilyIDErrorTooltip = (<Popover id="FamilyIDtip" title="Error">You dont have access to this family. Please enter a new family code.</Popover>);
+const SampleErrorTooltip = (<Popover id="SampleNametip" title="Error">You dont have access to this participant code. Please enter a new participant code.</Popover>);
 const ProjectErrorTooltip = (<Popover id="ProjectNametip" title="Error">You dont have access to this project. Please enter a new project name.</Popover>);
 const CohortErrorTooltip = (<Popover id="CohortNametip" title="Error">You dont have access to this cohort. Please enter a new cohort name.</Popover>);
-const SampleExistsTooltip = (<Popover id="SampleExiststip" title="Information">This sample was previously deposited into database. Gender and Family information values have been autofilled.</Popover>);
+const SampleExistsTooltip = (<Popover id="SampleExiststip" title="Information">This participant was previously deposited into database. Gender and Family information values have been autofilled.</Popover>);
 const CohortExistsTooltip = (<Popover id="CohortExiststip" title="Information">This cohort alreay exists in database. Project name column has been autofilled.</Popover>);
 const fields2ErrorToolTips = {'FamilyID': FamilyIDErrorTooltip, 'SampleName': SampleErrorTooltip, 'CohortName': CohortErrorTooltip, 'ProjectName': ProjectErrorTooltip};
 
@@ -233,11 +233,12 @@ export default class ManualInputTable extends React.Component {
             this.checkExistingSamples(updated['SampleID'],fromRow);
 
         }
+        /*
         if('CohortName' in updated){
 
             this.checkExistingProjects(updated['CohortName'],fromRow);
 
-        }
+        }*/
     }
     checkExistingSamples(SampleID,row){
 
@@ -445,7 +446,7 @@ export default class ManualInputTable extends React.Component {
   }
   onDrop(files) {
 
-        let ExcelHeader2Keys = {'PhenomeCentral ID': 'PhenomeCentralSampleID','FamilyID': 'FamilyID','Sample name':'SampleName','Gender':'Gender','Family information':'SampleType','Dataset type':'DatasetType','Tissue type': 'TissueType','Cohort name':'CohortName','Project name': 'ProjectName','Run ID':'RunID','Notes':'Notes'}; // only used in this function. we can move it up top if we need it somewhere else 
+        let ExcelHeader2Keys = {'PhenomeCentral ID': 'PhenomeCentralSampleID','Family code': 'FamilyID','Participant code':'SampleName','Gender':'Gender','Relationship':'SampleType','Dataset type':'DatasetType','Tissue type': 'TissueType','Cohort name':'CohortName','Project name': 'ProjectName','Run ID':'RunID','Notes':'Notes'}; // only used in this function. we can move it up top if we need it somewhere else 
 
         let wrongExtensionError = 0;
         files.forEach( (file) => { 
@@ -475,7 +476,7 @@ export default class ManualInputTable extends React.Component {
 
             let data = e.target.result;
             let workbook = XLSX.read(data, {type: 'binary'});
-            let sampleData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], {header:1});
+            let sampleData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], {header:1, blankrows: false});
             let header2Index = {};
             sampleData.shift().forEach((headerCol,headerIndex) => {
 
@@ -514,14 +515,14 @@ export default class ManualInputTable extends React.Component {
   render() {
       const columns = [
       { key: 'id', name: 'No.',width:150,visible: true,onPlusClick:this.duplicateRow,onMinusClick:this.clearRow, activeRows: this.state.activeRows, formatter:<IDFormatter />},
+      { key: 'ProjectName', name: 'Project name', editable: true,resizable:true,width:225, visible: true, warnValues:this.state.warnValues, formatter: <FieldFormatter />, editor: <DropDownEditor options={this.props.projectList} />},
       { key: 'CohortName', name: 'Cohort name', editable:true,resizable:true,width:250, visible: true, warnValues:this.state.warnValues, existingCohorts: this.state.existingCohorts, formatter: <FieldFormatter />},
-      { key: 'ProjectName', name: 'Project name', editable: true,resizable:true,width:225, visible: true, warnValues:this.state.warnValues, formatter: <FieldFormatter />},
       { key: 'PhenomeCentralSampleID', name: 'PhenomeCentral ID', editable:true,resizable:true,width:150, visible: true },
-      { key: 'FamilyID', name: 'FamilyID',editable:true,resizable:true, width:130, visible: true,warnValues:this.state.warnValues, formatter: <FieldFormatter />},
-      { key: 'SampleName', name: 'Sample name', editable:true,resizable:true,width:150, visible: true,warnValues:this.state.warnValues, formatter: <FieldFormatter />}, 
-      { key: 'SampleID', name: 'Sample ID (auto populated)',resizable:true,width:200, visible: true,existingSamples: this.state.existingSamples, formatter: <FieldFormatter />}, 
+      { key: 'FamilyID', name: 'Family code',editable:true,resizable:true, width:130, visible: true,warnValues:this.state.warnValues, formatter: <FieldFormatter />},
+      { key: 'SampleName', name: 'Participant code', editable:true,resizable:true,width:150, visible: true,warnValues:this.state.warnValues, formatter: <FieldFormatter />}, 
+      { key: 'SampleID', name: 'Participant ID (auto populated)',resizable:true,width:200, visible: true,existingSamples: this.state.existingSamples, formatter: <FieldFormatter />}, 
       {key: 'Gender', name: 'Gender',editable:true,resizable:true,width:100, editor: <DropDownEditor options={Genders} />, visible: true},
-      { key: 'SampleType', name: 'Family information',editable:true,resizable:true,width:150, visible: true, editor: <DropDownEditor options={FamilyDropDown} /> },
+      { key: 'SampleType', name: 'Relationship',editable:true,resizable:true,width:150, visible: true, editor: <DropDownEditor options={FamilyDropDown} /> },
       { key: 'DatasetType', name: 'Dataset type', editable:true,resizable:true,width:150, visible: true, editor: <DropDownEditor options={DATASET_TYPES} /> },
       { key: 'TissueType', name: 'Tissue type',editable:true,resizable:true,width:150, visible: true },
       { key: 'RunID', name: 'Run ID',editable:true,resizable:true,width:100, visible: true },
@@ -546,16 +547,17 @@ export default class ManualInputTable extends React.Component {
       </Dropzone>
       <Panel>
             <Panel.Body>
-            You can also drag and drop an excel (.xls or .xlsx) file onto the table above. Use this <a href='/files/uploadTemplate' download='upload_template.xls'>template</a> to fill in data for upload (<b>Warning</b>: Dropping a file onto the table will clear any existing data in the table).<br/>
+            You can also drag and drop an excel (.xls or .xlsx) file onto the table above. Use this <a href='/files/uploadTemplate' download='upload_template.xlsx'>template</a> to fill in data for upload (<b>Warning</b>: Dropping a file onto the table will clear any existing data in the table).<br/>
                 <b>Instructions</b>
                 <ol>
-                    <li><b> FamilyID, Sample name, Dataset type, Project name and Cohort name </b> are required columns. </li>
-                    <li><b> Sample ID</b> column is auto populated. Format of Sample ID is FamilyID_Samplename.</li>
+                    <li><b> Project name, Family code, Participant code, Dataset type</b> are required columns. </li>
+                    <li>If <b>Cohort name</b> column for a participant is empty, it will be entered into the default cohort of that project. </li>
+                    <li><b>Participant ID</b> column is auto populated. Format of Participant ID is Familycode_Participantcode.</li>
                 </ol>
 
             </Panel.Body>  
     </Panel>
-      <Button  bsStyle="primary" bsSize="large" block onClick={this.handleSaveData}>Click here to insert samples into database</Button>
+      <Button  bsStyle="primary" bsSize="large" block onClick={this.handleSaveData}>Click here to insert data into sample tracker</Button>
     </div>
     );
   }

@@ -11,13 +11,17 @@ class AccessLevel(enum.Enum):
     Admin = 'Admin'
     Regular = 'Regular'
 
+class ObsoleteStatus(enum.Enum):
+    Yes = 'Yes'
+    No = 'No'
+
 class User(UserMixin, db.Model) :
 
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(30), unique=True, nullable=False)
     password = db.Column(db.String(200), unique=False, nullable=False)
     email = db.Column(db.String(150), unique=True, nullable=False)
-    accessLevel = db.Column(db.Enum(AccessLevel), default='Regular')
+    accessLevel = db.Column(db.Enum(AccessLevel), default='Regular', server_default='Regular')
     updateUsers = db.relationship('AnalysisStatus',backref='user',lazy='dynamic')
     projectUsers = db.relationship('Projects2Users',backref='user',lazy='dynamic')
 
@@ -47,6 +51,7 @@ class Project(db.Model):
     ProjectDescription = db.Column(db.Text)
     projects2Cohort = db.relationship('Cohort', backref='project',lazy='dynamic')
     projects2User = db.relationship('Projects2Users', backref='project',lazy='dynamic')
+    projects2DefaultCohort = db.relationship('Project2DefaultCohort', backref='project', lazy='dynamic')
 
 class Projects2Users(db.Model):
     
@@ -54,14 +59,23 @@ class Projects2Users(db.Model):
     ProjectID = db.Column(db.Integer,db.ForeignKey('project.ProjectID',onupdate="cascade",ondelete="restrict"), primary_key = True)
     userID  = db.Column(db.Integer, db.ForeignKey('user.id',onupdate="cascade",ondelete="restrict"), primary_key = True)
 
+class Project2DefaultCohort(db.Model):
+    
+    __tablename__ = 'project2DefaultCohort'
+    ProjectID = db.Column(db.Integer,db.ForeignKey('project.ProjectID',onupdate="cascade",ondelete="restrict"), primary_key = True)
+    CohortID = db.Column(db.Integer,db.ForeignKey('cohort.CohortID', onupdate="cascade",ondelete="restrict"))
+        
+
 class Cohort(db.Model):
 
     CohortID = db.Column(db.Integer, primary_key=True)
     CohortName = db.Column(db.String(100), nullable=False, unique=True)
     CohortDescription = db.Column(db.Text)
     ProjectID = db.Column(db.Integer,db.ForeignKey('project.ProjectID',onupdate="cascade",ondelete="restrict"))
+    Obsolete = db.Column(db.Enum(ObsoleteStatus), default=ObsoleteStatus.No.value, server_default=ObsoleteStatus.No.value)
     cohorts2Data = db.relationship('Dataset2Cohort', backref='cohort',lazy='dynamic')
     cohorts2Dataset = db.relationship('Dataset', backref='cohort',lazy='dynamic')
+    cohorts2Project = db.relationship('Project2DefaultCohort', backref='cohort', lazy='dynamic')
 
 class Dataset(db.Model):
 
@@ -74,7 +88,7 @@ class Dataset(db.Model):
     EnteredBy = db.Column(db.Integer,db.ForeignKey('uploaders.UploadID', onupdate="cascade",ondelete="restrict"), nullable=True)
     UploadDate = db.Column(db.Date, nullable=True)
     UploadID = db.Column(db.Integer, nullable=True)
-    UploadStatus = db.Column(db.String(45), nullable=False, default="pending")
+    UploadStatus = db.Column(db.String(45), nullable=False, default="pending", server_default="pending")
     HPFPath = db.Column(db.String(500))
     DatasetType = db.Column(db.String(45), nullable=False)
     SolvedStatus = db.Column(db.String(30), nullable=False)
@@ -97,7 +111,7 @@ class Dataset2Uploaders(db.Model):
     DatasetID = db.Column(db.Integer, db.ForeignKey('dataset.DatasetID', onupdate="cascade",ondelete="restrict"), primary_key = True, nullable=True)
     UploadDate = db.Column(db.Date, nullable=True)
     UploaderID = db.Column(db.Integer,db.ForeignKey('uploaders.UploadID', onupdate="cascade",ondelete="restrict"), nullable=True) 
-    UploadStatus = db.Column(db.String(45), nullable=False, default="pending")
+    UploadStatus = db.Column(db.String(45), nullable=False, default="pending", server_default="pending")
 
 class Dataset2Cohort(db.Model):
 	
