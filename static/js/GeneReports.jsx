@@ -52,6 +52,8 @@ export default class GeneReports extends React.Component {
         return;
       }
 
+      const numberOfGenes = this.state.selectedGenes.length;
+
       fetch(DOWNLOAD_GENE_REPORT, {
         method: "POST",
         body: JSON.stringify({
@@ -70,7 +72,7 @@ export default class GeneReports extends React.Component {
       .then((resp) => resp.blob())
       .then((blob) => {
 
-        const fileName = this.state.GENE_DB_VERSION + ".wes.snv.gene.export.tar";
+        const fileName = this.state.GENE_DB_VERSION + ".wes.snv." + numberOfGenes + ".gene.export.tar";
         saveAs(blob, fileName);
       });
 
