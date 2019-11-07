@@ -174,7 +174,7 @@ export default class CohortTable extends React.Component{
     }
     render() {
         let  columns = [
-                    {field: 'SampleID', headerName:'Sample ID',headerCheckboxSelection: true, headerCheckboxSelectionFilteredOnly: true,sortable: true,filter: true,checkboxSelection: true, editable: true, pinned: 'left', cellClass: "lock-pinned",lockPinned: true, resizable: true, filter:'agTextColumnFilter', width: 250, 
+                    {field: 'SampleID', headerName:'Participant ID',headerCheckboxSelection: true, headerCheckboxSelectionFilteredOnly: true,sortable: true,filter: true,checkboxSelection: true, editable: true, pinned: 'left', cellClass: "lock-pinned",lockPinned: true, resizable: true, filter:'agTextColumnFilter', width: 250, 
                         onCellValueChanged: ({oldValue, newValue, data}) => {this.updateValues('SampleID', oldValue, newValue,data); }
                     }, 
                     {field: 'PhenomeCentralSampleID', headerName: 'PCID', sortable: true,filter: true, editable: true, resizable: true, filter:'agTextColumnFilter',width: 100,
@@ -223,7 +223,7 @@ export default class CohortTable extends React.Component{
                                 <form>
                                     <Col md={2}>
                                         <FormGroup controlId='actionSelect_bottom' bsSize="sm" >
-                                            <ControlLabel> With selected samples</ControlLabel>
+                                            <ControlLabel> With selected participants</ControlLabel>
                                             <FormControl  bsSize="sm" componentClass="select" placeholder="select" onChange={this.handleActionSelect} value={this.state.actionSelectValue}>
                                                 <option value=""></option>
                                                 {Object.keys(actionSelectOptions).map(opt => { return (<option key = {opt} value={opt} > {actionSelectOptions[opt]} </option> ); } )}

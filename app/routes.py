@@ -84,13 +84,13 @@ def index():
 @login_required
 def uploadTemplate():
 
-    return send_file(os.path.dirname(app.instance_path)+"/static/files/upload.xls") 
+    return send_file(os.path.dirname(app.instance_path)+"/static/files/upload.xlsx") 
 
 @app.route("/files/updateTemplate")
 @login_required
 def updateTemplate():
 
-    return send_file(os.path.dirname(app.instance_path)+"/static/files/update.xls") 
+    return send_file(os.path.dirname(app.instance_path)+"/static/files/update.xlsx") 
 
 @app.route('/fetch/cohort_list')
 @login_required
@@ -266,7 +266,11 @@ def fetchProjectList():
     if projectResults is not None:
         for result in projectResults:
             projectList.append(result.ProjectName)
- 
+
+    projectList.sort()
+    if 'Temp' in projectList:
+        projectList.remove('Temp')
+        projectList.insert(0,'Temp')
     return json.dumps(projectList, default=str)
 
 @app.route('/checkIFSampleExists/<SampleID>')
@@ -387,7 +391,7 @@ def get_samples_in_cohort(searchterm,searchvalue):
         if row.Dataset.DatasetID in addedDatasets: # if dataset is already added, get its index and check if current analysis date is higher than the previous
             modifyIndex = addedDatasets.index(row.Dataset.DatasetID)
         if modifyIndex == -1:
-            samples.append({'Sample': row.Sample.SampleName,'SampleID': row.Sample.SampleID, 'activeCohort': row.Cohort.CohortName, 'datasetID':row.Dataset.DatasetID, 'datasetType':row.Dataset.DatasetType,'EnteredDate': row.Dataset.EnteredDate, 'AnalysisDate': row.AnalysisStatus.UpdateDate, 'AnalysisID': row.AnalysisStatus.AnalysisID, 'Status': row.Dataset.SolvedStatus, 'AnalysisStatus': row.AnalysisStatus.AnalysisStep, 'FamilyID': row.Family.FamilyID, 'AssignedTo': row.Analysis.AssignedTo});
+            samples.append({'Sample': row.Sample.SampleName,'SampleID': row.Sample.SampleID, 'activeCohort': row.Cohort.CohortName, 'datasetID':row.Dataset.DatasetID, 'datasetType':row.Dataset.DatasetType,'EnteredDate': row.Dataset.EnteredDate, 'AnalysisDate': row.AnalysisStatus.UpdateDate, 'AnalysisID': row.AnalysisStatus.AnalysisID, 'Status': row.Dataset.SolvedStatus, 'AnalysisStatus': row.AnalysisStatus.AnalysisStep, 'FamilyID': row.Family.FamilyID, 'AssignedTo': row.Analysis.AssignedTo, 'Notes': row.Dataset.Notes});
             addedDatasets.append(row.Dataset.DatasetID)
         else:
             if row.AnalysisStatus.UpdateDate > samples[modifyIndex]['AnalysisDate']:
@@ -508,8 +512,10 @@ def checkUpdateSamples():
 def get_cohort_stats(project):
 
     cohorts = []
-    
+    tmpCohort = {}   
+ 
     for cohortID,cohortName in fetch_cohorts(current_user.id,current_user.accessLevel.value,project).items(): 
+        
         tmpObj = {}
         tmpObj['CohortName'] = cohortName
         tmpObj['CohortID'] = cohortID
@@ -524,9 +530,15 @@ def get_cohort_stats(project):
                 tmpObj['pendingSamples'].append(result.Dataset.SampleID)
 
         tmpObj['Processed'] = int(tmpObj['Samples']) - len(tmpObj['pendingSamples'])    
-        cohorts.append(tmpObj)
+        if cohortName == 'Temp':
+            tmpCohort = tmpObj
+        else:
+            cohorts.append(tmpObj)
     
-    cohorts.sort(key=lambda c: c['CohortName'], reverse=True) 
+    cohorts.sort(key=lambda c: c['CohortName']) 
+    if 'CohortName' in tmpCohort:
+        cohorts.insert(0,tmpCohort)
+   
     return json.dumps(cohorts,default=str)
 
 @app.route('/requestReanalysis',methods=["POST"])
@@ -637,6 +649,12 @@ def updateDatasetFields():
 
             for dataSet in postObj['datasets']:
                 if 'datasetID' in dataSet:
+                    if postObj['field'] == 'DatasetType':
+                        sample_id = Dataset.query.filter_by(DatasetID=dataSet['datasetID']).first().SampleID
+                        if check_if_dataset_exists(sample_id, postObj['updateTo']):
+                            retStr={'Status': 'Error! This dataset already exists for this sample. Dataset type is not updated in database. Please refresh the browser to see the original value.'}
+                            updateSuccess = 0
+                            break  
                     try:
                         db.session.query(Dataset).filter(Dataset.DatasetID==dataSet['datasetID']).update({postObj['field']: postObj['updateTo']})
                         if postObj['field'] == 'Notes':
@@ -734,12 +752,24 @@ def insertNewSamplesintoDatabase():
         return json.dumps(sampleObj,default=str)
 
     if 'samples' in sampleObj:
-        for sampleRecord in sampleObj['samples']:
+        for index, sampleRecord in enumerate(sampleObj['samples']):
             if checkSampleRecordValues(sampleRecord) == False:
                 return json.dumps({'Status': 'Error', 'Reason': 'Some of the samples are missing required columns.'},default=str)
-            retStatus = checkCohortandProjectAccess(current_user.id,current_user.accessLevel.value,sampleRecord)
-            if len(retStatus) > 0: 
-                return json.dumps({'Status': 'Error', 'Reason': retStatus},default=str)
+            if check_if_dataset_exists(sampleRecord['SampleID'], sampleRecord['DatasetType']):
+                return json.dumps({'Status': 'Error', 'Reason': "Error in line "+ str(index+1) + '. This dataset already exists for this sample. Please remove it or change the dataset type.'},default=str)
+            if len(checkCohortandProjectAccess(current_user.id,current_user.accessLevel.value,sampleRecord)) > 0:
+                return json.dumps({'Status': 'Error', 'Reason': "Error in line "+ str(index+1) + ". "+retStatus},default=str)
+            if 'CohortName' not in sampleRecord or len(sampleRecord['CohortName']) == 0:
+                # get default cohort for project here.
+                sampleObj['samples'][index]['CohortName'] = get_default_cohort(sampleRecord['ProjectName'])
+                if sampleObj['samples'][index]['CohortName'] is None:
+                    return json.dumps({'Status': 'Error', 'Reason': "Error in line "+ str(index+1) + ". Project "+sampleRecord['ProjectName']+" doesn't have a default cohort. Please enter a cohort name for this sample."},default=str)
+            else:
+                #remove trailing spaces here
+                 sampleObj['samples'][index]['CohortName'] = sampleObj['samples'][index]['CohortName'].rstrip()
+            
+            if 'Gender' not in sampleRecord or len(sampleRecord['Gender']) == 0:
+                sampleObj['samples'][index]['Gender'] = None    
 
     success = 1
     if 'samples' in sampleObj:
@@ -861,6 +891,7 @@ def updateSampleFields():
                 if sampleObj['field']=='SampleID':
                     if SampleIDExists(sampleObj['updateTo']) == 1:
                         return json.dumps({'Status': 'New SampleID exists in database. SampleID is not updated.'},default=str)
+                    
 
                     oldFamID, oldSampleName = record['sampleID'].split("_",1)
                     newFamID, newSampleName = sampleObj['updateTo'].split("_",1)

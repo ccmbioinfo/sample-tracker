@@ -68,7 +68,7 @@ export default class CohortModal extends React.Component {
 			<Form>
 				<FormGroup controlId="add2ExistingCohort" bsSize="sm">
 					<ControlLabel>
-						Move samples to an existing cohort
+						Move participants to an existing cohort
 					</ControlLabel>
 					<FormControl bsSize="sm" componentClass="select" placeholder="select" onChange={this.setValue} value={this.state.selectedDropDownCohort}>
                                  		<option value=""></option>

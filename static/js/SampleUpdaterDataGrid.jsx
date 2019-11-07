@@ -11,11 +11,11 @@ import {DATASET_TYPES,UPDATER_ANALYSIS_STATUSES} from './Constants';
 
 const {AutoComplete: AutoCompleteEditor, DropDownEditor } = Editors;
 const {Row} = ReactDataGrid;
-const requiredColumns = {'SampleID':'Sample ID','DatasetType':'Dataset Type','EnteredDate': 'Analysis/Reanalysis requested date','Status': 'Analysis Status'};
+const requiredColumns = {'SampleID':'Participant ID','DatasetType':'Dataset Type','EnteredDate': 'Analysis/Reanalysis requested date','Status': 'Analysis Status'};
 const BOOLTypes = ['','Y'];
 
 const defaultToolTip = (<Popover id="defaultTip" title="Error">Error!</Popover>);
-const SampleIDErrorTooltip = (<Popover id="SampleNametip" title="Error">Sample ID is not found in database. Please correct it.</Popover>);
+const SampleIDErrorTooltip = (<Popover id="SampleNametip" title="Error">Participant ID is not found in database. Please correct it.</Popover>);
 const fields2ErrorToolTips = {'SampleID': SampleIDErrorTooltip};
 
 const addIcon = <Glyphicon glyph='plus' />;
@@ -343,7 +343,7 @@ export default class ManualUpdateTable extends React.Component {
   }
   onDrop(files) {
 
-        const ExcelHeader2Keys = {'Sample ID': 'SampleID','Dataset type': 'DatasetType', 'Analysis requested date': 'EnteredDate', 'Analysis Status': 'Status', 'Pipeline version': 'PipelineVersion', 'Input file': 'InputFile', 'Result directory': 'ResultsDirectory', 'Result BAM': 'ResultsBAM', 'Notes': 'Notes'}; 
+        const ExcelHeader2Keys = {'Participant code': 'SampleID','Dataset type': 'DatasetType', 'Analysis requested date': 'EnteredDate', 'Analysis Status': 'Status', 'Pipeline version': 'PipelineVersion', 'Input file': 'InputFile', 'Result directory': 'ResultsDirectory', 'Result BAM': 'ResultsBAM', 'Notes': 'Notes'}; 
         let wrongExtensionError = 0;
         files.forEach( (file) => { 
         
@@ -371,7 +371,7 @@ export default class ManualUpdateTable extends React.Component {
 
             let data = e.target.result;
             let workbook = XLSX.read(data, {type: 'binary'});
-            let sampleData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], {header:1});
+            let sampleData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], {header:1,blankrows: false});
             let header2Index = {};
             sampleData.shift().forEach((headerCol,headerIndex) => {
 
@@ -405,7 +405,7 @@ export default class ManualUpdateTable extends React.Component {
   render() {
       const columns = [
       { key: 'id', name: 'No.',width:150,visible: true,onPlusClick:this.duplicateRow,onMinusClick:this.clearRow, activeRows: this.state.activeRows, formatter:<IDFormatter />},
-      { key: 'SampleID', name: 'Sample ID', editable:true,resizable:true,width:150,visible: true,warnValues:this.state.warnValues, formatter: <FieldFormatter />}, 
+      { key: 'SampleID', name: 'Participant ID', editable:true,resizable:true,width:150,visible: true,warnValues:this.state.warnValues, formatter: <FieldFormatter />}, 
       { key: 'DatasetType', name: 'Dataset type', editable:true,resizable:true,width:100, visible: true, editor: <DropDownEditor options={DATASET_TYPES} /> },
       { key: 'EnteredDate', name: 'Analysis/Reanalysis requested date(yyyy-mm-dd)', editable:true,resizable:true,width:360, visible: true  },
       { key: 'Status', name: 'Analysis Status', editable:true,resizable:true,width:125, visible: true, editor: <DropDownEditor options={UPDATER_ANALYSIS_STATUSES} /> },
@@ -433,16 +433,16 @@ export default class ManualUpdateTable extends React.Component {
       </Dropzone>
       <Panel>
             <Panel.Body>
-                You can also drag and drop an excel (.xls or .xlsx) file onto the table above. Use this <a href='/files/updateTemplate' download='Update_template.xls'>template</a> to fill in data for upload (<b>Warning</b>: Dropping a file onto the table will clear any existing data in the table).<br/>
+                You can also drag and drop an excel (.xls or .xlsx) file onto the table above. Use this <a href='/files/updateTemplate' download='Update_template.xlsx'>template</a> to fill in data for upload (<b>Warning</b>: Dropping a file onto the table will clear any existing data in the table).<br/>
                 <b>Instructions</b>
                 <ol>
-                    <li> <b>SampleID, Dataset type, Date Entered/Reanalysis requested</b> and <b>Analysis Status</b> columns are required. </li>
-                    <li> Please enter either the date on which a sample is uploaded (for new samples) or the date on which Reanalysis was requested (for reanalysis samples) for <b>Date Entered/Reanalysis requested</b> column. </li>
+                    <li> <b>Participant ID, Dataset type, Date Entered/Reanalysis requested</b> and <b>Analysis Status</b> columns are required. </li>
+                    <li> Please enter either the date on which a participant is uploaded (for new participants) or the date on which Reanalysis was requested (for reanalysis participants) for <b>Date Entered/Reanalysis requested</b> column. </li>
                     <li> You can leave the other fields blank if you dont want to overwrite their existing values in database.</li>
                 </ol>
             </Panel.Body>
       </Panel>
-      <Button  bsStyle="primary" bsSize="large" block onClick={this.handleSaveData}>Click here to update sample status in database</Button>
+      <Button  bsStyle="primary" bsSize="large" block onClick={this.handleSaveData}>Click here to update data in sample tracker</Button>
       </div>
     );
   }

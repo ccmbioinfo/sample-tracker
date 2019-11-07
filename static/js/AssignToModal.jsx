@@ -56,7 +56,7 @@ export default class AssignToModal extends React.Component {
 			<Form>
 				<FormGroup controlId="updateAnalysisStatus" bsSize="sm">
 					<ControlLabel>
-					    Assign samples to user:	
+					    Assign participants to user:	
 					</ControlLabel>
 					<FormControl bsSize="sm" componentClass="select" placeholder="select" onChange={this.setValue} value={this.state.selectedDropDownStatus}>
 						<option value=""></option>

@@ -66,8 +66,8 @@ export default class CohortStats extends React.Component{
                                                         }
                     }, 
                     {dataField: 'Families', text:"Families",sort: true, editable: false,headerStyle: (colum, colIndex) => {return { width: '150px' }} }, 
-                    {dataField: 'Samples', text:"Samples",sort: true, editable: false, headerStyle: (colum, colIndex) => {return { width: '150px' }} }, 
-                    {dataField: 'Processed', text:"Samples processed",sort: true, editable: false, headerStyle: (colum, colIndex) => {return { width: '200px'}} },
+                    {dataField: 'Samples', text:"Participants",sort: true, editable: false, headerStyle: (colum, colIndex) => {return { width: '150px' }} }, 
+                    {dataField: 'Processed', text:"Participants processed",sort: true, editable: false, headerStyle: (colum, colIndex) => {return { width: '200px'}} },
                     {dataField: 'CohortDescription', text:"Notes",sort: false, editable: true,editor: {type: Type.TEXT}} 
                                         
         ];
