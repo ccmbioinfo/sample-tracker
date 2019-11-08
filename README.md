@@ -2,6 +2,15 @@
 
 sample-tracker: a light weight flask,react and MySQL based web app to store and track status of incoming samples and their associated information.
 
+### Update instructions
+    Once you pull a latest copy of Sample-Tracker , use the following commands to update the schema and JS bundle
+    ```
+        npm run build # to update JS bunble
+        export FLASK_APP=sample_tracker.py
+        flask db upgrade # to update database schema if necessary
+    ``` 
+    Once you update JS bundle and db schema, restart flask server for changes to take effect.
+
 ### Installation instructions for ubuntu
   Please make sure that your account has sudo permissions before proceeding with these installation steps and commands.
   ```
