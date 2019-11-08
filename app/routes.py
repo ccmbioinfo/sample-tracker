@@ -753,6 +753,9 @@ def insertNewSamplesintoDatabase():
 
     if 'samples' in sampleObj:
         for index, sampleRecord in enumerate(sampleObj['samples']):
+            
+            for field in sampleObj['samples'][index]:
+                sampleObj['samples'][index][field] = str(sampleObj['samples'][index][field]).rstrip()
             if checkSampleRecordValues(sampleRecord) == False:
                 return json.dumps({'Status': 'Error', 'Reason': 'Some of the samples are missing required columns.'},default=str)
             if check_if_dataset_exists(sampleRecord['SampleID'], sampleRecord['DatasetType']):
