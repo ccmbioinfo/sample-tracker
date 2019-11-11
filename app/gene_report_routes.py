@@ -21,6 +21,9 @@ def has_admin_access():
 	return current_user.is_authenticated and current_user.accessLevel.value == "Admin"
 
 def load_df():
+	if len(glob("./gene_reports/*sample_wise.csv")) == 0 or len(glob("./gene_reports/*variant_wise.csv")) == 0:
+		return
+	
 	latest_sample_wise = glob("./gene_reports/*sample_wise.csv")[-1]
 	latest_variant_wise = glob("./gene_reports/*variant_wise.csv")[-1]
 
