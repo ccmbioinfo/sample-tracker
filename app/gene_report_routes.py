@@ -72,11 +72,11 @@ def gen_gene_report():
 		return report_types[1]
 	def check_sample_report(report_types):
 		return report_types[0]
-	def tar_dir(dirpath, user_dir):
+	def zip_dir(dirpath, user_dir):
 		archive_to = basename(dirpath)
 		archive_from = dirname(dirpath)
-		make_archive(dirpath, 'tar', archive_from, archive_to)
-		return "%s.tar" % dirpath
+		make_archive(dirpath, 'zip', archive_from, archive_to)
+		return "%s.zip" % dirpath
 	
 	if not has_admin_access():
 		return
@@ -133,6 +133,6 @@ def gen_gene_report():
 			if check_sample_report(report_types):
 				SAMPLE_WISE_DF.loc[gene].to_csv(SAMPLE_WISE_GENE_REPORT, header=True)
 	
-	tar_path = tar_dir(gene_export_dir, user_dir)
+	zip_path = zip_dir(gene_export_dir, user_dir)
 	rmtree(gene_export_dir)
-	return send_file(tar_path, mimetype='application/gzip', cache_timeout=10, attachment_filename=basename(tar_path))
+	return send_file(zip_path, mimetype='application/gzip', cache_timeout=10, attachment_filename=basename(zip_path))

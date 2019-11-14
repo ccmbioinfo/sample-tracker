@@ -72,7 +72,7 @@ export default class GeneReports extends React.Component {
       .then((resp) => resp.blob())
       .then((blob) => {
 
-        const fileName = this.state.GENE_DB_VERSION + ".wes.snv." + numberOfGenes + ".gene.export.tar";
+        const fileName = this.state.GENE_DB_VERSION + ".wes.snv." + numberOfGenes + ".gene.export.zip";
         saveAs(blob, fileName);
       });
 
