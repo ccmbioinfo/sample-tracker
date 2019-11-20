@@ -117,7 +117,7 @@ Then, create the minifi'ed JS bundle using the command
   from app import routes
   
   ```
-  Now, initialize the database with sample-trakcer's latest schema by using the following commands (from the root folder)
+  Now, initialize the database with sample-tracker's latest schema by using the following commands (from the root folder)
   
   ```
     export FLASK_APP=sample_tracker.py
@@ -134,7 +134,7 @@ Then, create the minifi'ed JS bundle using the command
   
   Now, you should be able to access sample-tracker at ```http://localhost:5000```
   
-  As discussed above, this setup of sample-tracker without https, gunicorn, nginx and flask-talisman should only be used for **testing purposes**. If you want to deploy sample-tracker, please serve flask using gunicorn, nginx and https'ise sample-trakcer's traffic using flask-talisman (i.e. uncomment the  flask-talisman lines from app/__init__.py and use a https key to secure the traffic).
+  As discussed above, this setup of sample-tracker without https, gunicorn, nginx and flask-talisman should only be used for **testing purposes**. If you want to deploy sample-tracker, please serve flask using gunicorn, nginx and https'ise sample-tracker's traffic using flask-talisman (i.e. uncomment the  flask-talisman lines from app/__init__.py and use a https key to secure the traffic).
   
   Teja
   
