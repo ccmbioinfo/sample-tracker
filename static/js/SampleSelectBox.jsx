@@ -90,8 +90,11 @@ export default class SampleSelectBox extends React.Component{
 										<ControlLabel>
 					 						Tissue type
 										</ControlLabel>
-											<FormControl bsSize="sm" type="text" placeholder="Enter tissue name" onChange={this.props.fetchSamples} value={this.props.formInput.tissueTypeSelect}/>
-		
+	                                    <FormControl bsSize="sm" componentClass="select" placeholder="select" onChange={this.props.fetchSamples} value={this.props.formInput.tissueTypeSelect}>
+                                            <option value=""></option>
+                                            <option value="ALL">ALL</option>
+                                            {this.props.tissueType.map( (proj,index) => <option key = {index} value={proj} >{proj}</option> )}
+                                        </FormControl>	
   									</FormGroup>
 									<FormGroup controlId="pipelineSelect" bsSize="sm">
 										<ControlLabel>
@@ -208,15 +211,15 @@ export default class SampleSelectBox extends React.Component{
 									
                                     <FormGroup controlId="familySelect" bsSize="sm">
                                         <ControlLabel>
-                                            Family code(s) - multiple values separated by ','
+                                            Family code(s) - multiple values separated by ','. After entry, click anywhere outside the box to search. 
                                         </ControlLabel>
-                                    <FormControl componentClass="textarea" placeholder="Enter Family code(s)" onChange={this.props.fetchSamples} value={this.props.formInput.familySelect}/>
+                                    <FormControl componentClass="textarea" placeholder="Enter Family code(s)" onChange={this.props.setinput} onBlur={this.props.fetchSamples} value={this.props.formInput.familySelect}/>
                                     </FormGroup>
 									<FormGroup controlId="sampleSelect" bsSize="sm">
 										<ControlLabel>
-					 						Participant code(s) - multiple values separated by ',' 
+					 						Participant code(s) - multiple values separated by ','. After entry, click anywhere outside the box to search.
 										</ControlLabel>
-											<FormControl componentClass="textarea" placeholder="Enter Participant code(s)" onChange={this.props.fetchSamples} value={this.props.formInput.sampleSelect}/>
+											<FormControl componentClass="textarea" placeholder="Enter Participant code(s)" onChange={this.props.setinput} onBlur={this.props.fetchSamples} value={this.props.formInput.sampleSelect}/>
   									</FormGroup>
                                 </Form>
 							</Panel.Body>

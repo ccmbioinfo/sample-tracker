@@ -1,7 +1,7 @@
 import React from "react";
 import {Checkbox, Grid, Row, Col,Form, Button, FormGroup,FormControl,ControlLabel} from 'react-bootstrap';
 import ActionModal from './ActionModal';
-import {DATASET_TYPES, ANALYSIS_STATUSES, SOLVED_STATUSES} from './Constants';
+import {TISSUE_TYPES,DATASET_TYPES, ANALYSIS_STATUSES, SOLVED_STATUSES} from './Constants';
 import {FETCH_UPLOAD_USER_SAMPLES, CHECK_IF_SAMPLE_EXISTS,UPDATE_SAMPLE_FIELDS, UPDATE_DATASET_FIELDS,UPDATE_ANALYSIS_STATUS,FETCH_USER_LIST, UPDATE_ANALYSIS_FIELDS} from './Url.jsx';
 import { AgGridReact } from 'ag-grid-react';
 import 'ag-grid-community/dist/styles/ag-grid.css';
@@ -189,7 +189,7 @@ export default class CohortTable extends React.Component{
                     {field: 'RunID', headerName: 'Run ID', sortable: true,filter: true, editable: true, resizable: true, filter:'agTextColumnFilter',width: 100,
                         onCellValueChanged: ({oldValue, newValue, data}) => {this.updateValues('RunID', oldValue, newValue,data); }
                     }, 
-                    {field: 'TissueType', headerName:"Tissue",sortable: true,filter: true, editable: true, resizable: true, filter:'agTextColumnFilter',width: 100,
+                    {field: 'TissueType', headerName:"Tissue",sortable: true,filter: true, editable: true, resizable: true, filter:'agTextColumnFilter',width: 100, cellEditor: 'agSelectCellEditor', cellEditorParams: {values: TISSUE_TYPES},
                         onCellValueChanged: ({oldValue, newValue, data}) => {this.updateValues('TissueType', oldValue, newValue,data); }
                     },
                     {field: 'EnteredDate', headerName: 'Entered Date', sortable:true,filter: true, editable: true, resizable: true, filter:'agTextColumnFilter',width: 130,

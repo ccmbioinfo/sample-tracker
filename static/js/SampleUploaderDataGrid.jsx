@@ -7,7 +7,7 @@ import XLSX from 'xlsx';
 import { Editors, Toolbar, Formatters } from 'react-data-grid-addons';
 import {Panel,Glyphicon, Button, Popover,OverlayTrigger,Tooltip} from 'react-bootstrap';
 import {CHECK_AND_FETCH_SAMPLE_INFO, CHECK_AND_FETCH_PROJECT_INFO,  CHECK_INPUT_FORM, INSERT_NEW_SAMPLES_INTO_DATABASE} from './Url.jsx';
-import {DATASET_TYPES} from './Constants';
+import {DATASET_TYPES, TISSUE_TYPES} from './Constants';
 
 const {AutoComplete: AutoCompleteEditor, DropDownEditor } = Editors;
 const {Row} = ReactDataGrid;
@@ -524,7 +524,7 @@ export default class ManualInputTable extends React.Component {
       {key: 'Gender', name: 'Gender',editable:true,resizable:true,width:100, editor: <DropDownEditor options={Genders} />, visible: true},
       { key: 'SampleType', name: 'Relationship',editable:true,resizable:true,width:150, visible: true, editor: <DropDownEditor options={FamilyDropDown} /> },
       { key: 'DatasetType', name: 'Dataset type', editable:true,resizable:true,width:150, visible: true, editor: <DropDownEditor options={DATASET_TYPES} /> },
-      { key: 'TissueType', name: 'Tissue type',editable:true,resizable:true,width:150, visible: true },
+      { key: 'TissueType', name: 'Tissue type',editable:true,resizable:true,width:150, visible: true, editor: <DropDownEditor options={TISSUE_TYPES} /> },
       { key: 'RunID', name: 'Run ID',editable:true,resizable:true,width:100, visible: true },
       { key: 'Notes', name: 'Notes',editable:true,resizable:true, visible: true }
     ];
