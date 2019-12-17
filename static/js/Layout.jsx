@@ -8,6 +8,8 @@ import {Link, Route, Redirect} from 'react-router-dom';
 import {LinkContainer} from 'react-router-bootstrap';
 import {GET_LOGGED_USER, LOGOUT} from './Url.jsx';
 
+const auth_gene_report_users = new Set(["eprice", "gediae", "thartley", "maosmond", "care4rare", "mgillespie", "test"])
+
 export default class Layout extends React.Component{
 
 	constructor(props) {
@@ -62,7 +64,7 @@ export default class Layout extends React.Component{
       						    Upload new participants
     					    </NavItem>
                         </LinkContainer>
-						{this.state.accessLevel === "Admin" &&
+						{(auth_gene_report_users.has(this.state.username) || this.state.accessLevel == "Admin") &&
 							<LinkContainer to="/GeneReports">
 								<NavItem eventKey={5}>
 									Gene SNV reports

@@ -15,10 +15,12 @@ GENE_LIST = []
 SAMPLE_WISE_DF = pd.DataFrame()
 VARIANT_WISE_DF = pd.DataFrame()
 
+AUTH_USERS = {"eprice", "gediae", "thartley", "maosmond", "care4rare", "mgillespie", "test"}
+
 ## Global functions
 
-def has_admin_access():
-	return current_user.is_authenticated and current_user.accessLevel.value == "Admin"
+def has_report_access():
+	return current_user.is_authenticated and (current_user.username in AUTH_USERS or current_user.accessLevel.value == "Admin")
 
 def load_df():
 	if len(glob("./gene_reports/*sample_wise.csv")) == 0 or len(glob("./gene_reports/*variant_wise.csv")) == 0:
@@ -30,20 +32,20 @@ def load_df():
 	VARIANT_WISE_VERSION = basename(latest_variant_wise).split('.')[0]
 	SAMPLE_WISE_VERSION = basename(latest_sample_wise).split('.')[0]
 
-	if VARIANT_WISE_VERSION == SAMPLE_WISE_VERSION:
-		global GENE_DB_VERSION
-		GENE_DB_VERSION = VARIANT_WISE_VERSION
-
-		global VARIANT_WISE_DF
-		VARIANT_WISE_DF = pd.read_csv(latest_variant_wise).set_index('Gene')
-
-		global SAMPLE_WISE_DF
-		SAMPLE_WISE_DF = pd.read_csv(latest_sample_wise).set_index('Gene')
-
-		global GENE_LIST
-		GENE_LIST = [str(gene) for gene in VARIANT_WISE_DF.index.unique() if not pd.isnull(gene)]
-	else:
+	if VARIANT_WISE_VERSION != SAMPLE_WISE_VERSION:
 		raise Exception('Latest gene database files are out of sync.')
+
+	global GENE_DB_VERSION
+	GENE_DB_VERSION = VARIANT_WISE_VERSION
+
+	global VARIANT_WISE_DF
+	VARIANT_WISE_DF = pd.read_csv(latest_variant_wise).set_index('Gene')
+
+	global SAMPLE_WISE_DF
+	SAMPLE_WISE_DF = pd.read_csv(latest_sample_wise).set_index('Gene')
+
+	global GENE_LIST
+	GENE_LIST = [str(gene) for gene in VARIANT_WISE_DF.index.unique() if not pd.isnull(gene)]
 
 load_df()
 
@@ -52,7 +54,7 @@ load_df()
 @app.route('/fetch/GENE_DB_VERSION', methods=["GET"])
 @login_required
 def get_db_version():
-	if not has_admin_access():
+	if not has_report_access():
 		return
 	
 	return json.dumps(GENE_DB_VERSION, default=str)
@@ -60,7 +62,7 @@ def get_db_version():
 @app.route('/fetch/gene_list', methods=["GET"])
 @login_required
 def gene_list():
-	if not has_admin_access():
+	if not has_report_access():
 		return
 	
 	return json.dumps(GENE_LIST)
@@ -78,7 +80,7 @@ def gen_gene_report():
 		make_archive(dirpath, 'zip', archive_from, archive_to)
 		return "%s.zip" % dirpath
 	
-	if not has_admin_access():
+	if not has_report_access():
 		return
 
 	postObj = request.get_json()
@@ -132,7 +134,7 @@ def gen_gene_report():
 				VARIANT_WISE_DF.loc[gene].to_csv(VARIANT_WISE_GENE_REPORT, header=True)
 			if check_sample_report(report_types):
 				SAMPLE_WISE_DF.loc[gene].to_csv(SAMPLE_WISE_GENE_REPORT, header=True)
-	
+
 	zip_path = zip_dir(gene_export_dir, user_dir)
 	rmtree(gene_export_dir)
 	return send_file(zip_path, mimetype='application/gzip', cache_timeout=10, attachment_filename=basename(zip_path))
