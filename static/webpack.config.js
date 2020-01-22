@@ -3,7 +3,11 @@ var ExtractTextPlugin = require('extract-text-webpack-plugin');
 
 const config = {
     entry:  {
-	app: __dirname + '/js/index.jsx'
+        app: __dirname + '/js/index.jsx',
+        bundle: [
+            __dirname + '/css/main.css',
+            __dirname + '/css/util.css'
+        ]
     },
     output: {
         path: __dirname + '/dist',
