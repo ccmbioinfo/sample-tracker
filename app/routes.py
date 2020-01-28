@@ -306,7 +306,28 @@ def get_upload_user_samples(CohortName):
                     #notes_info = "Last updated by " + users[str(row.Dataset.NotesLastUpdatedBy)] + " on " + str(row.Dataset.NotesLastUpdatedDate) 
                     notes_info = "Last updated by " + users[str(row.Dataset.NotesLastUpdatedBy)] + " on " + dt.datetime.strptime(str(row.Dataset.NotesLastUpdatedDate),'%Y-%m-%d').strftime('%B %d, %Y')
 
-            samples.append({'FamilyID': row.Family.FamilyID,'RunID': row.Dataset.RunID, 'SampleName': row.Sample.SampleName,'SampleID': row.Sample.SampleID,'TissueType': row.Sample.TissueType, 'PhenomeCentralSampleID': row.Sample.PhenomeCentralSampleID,'InputFile': row.Dataset.InputFile, 'id':row.Dataset.DatasetID, 'DatasetType':row.Dataset.DatasetType,'EnteredDate': row.Dataset.EnteredDate, 'AnalysisID': row.AnalysisStatus.AnalysisID,'AnalysisDate': row.AnalysisStatus.UpdateDate,'AssignedTo': row.Analysis.AssignedTo, 'SolvedStatus': row.Dataset.SolvedStatus,'Notes': row.Dataset.Notes,'NotesInfo': notes_info,'SendTo': row.Dataset.SendTo,'AnalysisStatus': row.AnalysisStatus.AnalysisStep, 'InputFile': row.Dataset.InputFile, 'ResultsDirectory': row.Analysis.ResultsDirectory, 'ResultsBAM': row.Analysis.ResultsBAM});
+            samples.append({'FamilyID': row.Family.FamilyID, \
+            'RunID': row.Dataset.RunID, \
+            'SampleName': row.Sample.SampleName, \
+            'SampleID': row.Sample.SampleID, \
+            'TissueType': row.Sample.TissueType, \
+            'PhenomeCentralSampleID': row.Sample.PhenomeCentralSampleID,\
+            'InputFile': row.Dataset.InputFile, \
+            'id':row.Dataset.DatasetID, \
+            'DatasetType':row.Dataset.DatasetType,\
+            'EnteredDate': row.Dataset.EnteredDate, \
+            'AffectedStatus': row.Sample.AffectedStatus.name if row.Sample.AffectedStatus else None, \
+            'AnalysisID': row.AnalysisStatus.AnalysisID,\
+            'AnalysisDate': row.AnalysisStatus.UpdateDate,\
+            'AssignedTo': row.Analysis.AssignedTo, \
+            'SolvedStatus': row.Dataset.SolvedStatus,\
+            'Notes': row.Dataset.Notes,\
+            'NotesInfo': notes_info,\
+            'SendTo': row.Dataset.SendTo,\
+            'AnalysisStatus': row.AnalysisStatus.AnalysisStep,\
+            'ResultsDirectory': row.Analysis.ResultsDirectory, \
+            'ResultsBAM': row.Analysis.ResultsBAM})
+
             addedDatasets.append(row.Dataset.DatasetID)
         else:
             if row.AnalysisStatus.UpdateDate > samples[modifyIndex]['AnalysisDate']:
@@ -392,7 +413,19 @@ def get_samples_in_cohort(searchterm,searchvalue):
         if row.Dataset.DatasetID in addedDatasets: # if dataset is already added, get its index and check if current analysis date is higher than the previous
             modifyIndex = addedDatasets.index(row.Dataset.DatasetID)
         if modifyIndex == -1:
-            samples.append({'Sample': row.Sample.SampleName,'SampleID': row.Sample.SampleID, 'activeCohort': row.Cohort.CohortName, 'datasetID':row.Dataset.DatasetID, 'datasetType':row.Dataset.DatasetType,'EnteredDate': row.Dataset.EnteredDate, 'AnalysisDate': row.AnalysisStatus.UpdateDate, 'AnalysisID': row.AnalysisStatus.AnalysisID, 'Status': row.Dataset.SolvedStatus, 'AnalysisStatus': row.AnalysisStatus.AnalysisStep, 'FamilyID': row.Family.FamilyID, 'AssignedTo': row.Analysis.AssignedTo, 'Notes': row.Dataset.Notes});
+            samples.append({'Sample': row.Sample.SampleName,\
+            'SampleID': row.Sample.SampleID, \
+            'activeCohort': row.Cohort.CohortName, \
+            'datasetID':row.Dataset.DatasetID, \
+            'datasetType':row.Dataset.DatasetType, \
+            'EnteredDate': row.Dataset.EnteredDate, \
+            'AnalysisDate': row.AnalysisStatus.UpdateDate, \
+            'AnalysisID': row.AnalysisStatus.AnalysisID, \
+            'Status': row.Dataset.SolvedStatus, \
+            'AnalysisStatus': row.AnalysisStatus.AnalysisStep, \
+            'FamilyID': row.Family.FamilyID, \
+            'AssignedTo': row.Analysis.AssignedTo, \
+            'Notes': row.Dataset.Notes})
             addedDatasets.append(row.Dataset.DatasetID)
         else:
             if row.AnalysisStatus.UpdateDate > samples[modifyIndex]['AnalysisDate']:
@@ -436,7 +469,18 @@ def get_samples_in_cohort_by_date(dateType,startDate,endDate):
         if row.Dataset.DatasetID in addedDatasets: # if dataset is already added, get its index and check if current analysis date is higher than the previous
             modifyIndex = addedDatasets.index(row.Dataset.DatasetID)
         if modifyIndex == -1:
-            samples.append({'Sample': row.Sample.SampleName,'SampleID': row.Sample.SampleID, 'activeCohort': row.Cohort.CohortName, 'datasetID':row.Dataset.DatasetID, 'datasetType':row.Dataset.DatasetType,'EnteredDate': row.Dataset.EnteredDate, 'AnalysisDate': row.AnalysisStatus.UpdateDate, 'AnalysisID': row.AnalysisStatus.AnalysisID, 'Status': row.Dataset.SolvedStatus, 'AnalysisStatus': row.AnalysisStatus.AnalysisStep, 'FamilyID': row.Family.FamilyID, 'AssignedTo': row.Analysis.AssignedTo});
+            samples.append({'Sample': row.Sample.SampleName, \
+            'SampleID': row.Sample.SampleID, \
+            'activeCohort': row.Cohort.CohortName, \
+            'datasetID':row.Dataset.DatasetID, \
+            'datasetType':row.Dataset.DatasetType, \
+            'EnteredDate': row.Dataset.EnteredDate, \
+            'AnalysisDate': row.AnalysisStatus.UpdateDate, \
+            'AnalysisID': row.AnalysisStatus.AnalysisID, \
+            'Status': row.Dataset.SolvedStatus, \
+            'AnalysisStatus': row.AnalysisStatus.AnalysisStep, \
+            'FamilyID': row.Family.FamilyID, \
+            'AssignedTo': row.Analysis.AssignedTo})
             addedDatasets.append(row.Dataset.DatasetID)
         else:
              if row.AnalysisStatus.UpdateDate > samples[modifyIndex]['AnalysisDate']:

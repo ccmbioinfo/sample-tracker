@@ -9,4 +9,5 @@ config.py
 *.pyc
 *.log
 .DS_Store
-
+migrations/__pycache__
+migrations/versions/__pycache
