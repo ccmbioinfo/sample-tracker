@@ -7,6 +7,10 @@ const config = {
         bundle: [
             __dirname + '/css/main.css',
             __dirname + '/css/util.css'
+        ],
+        bootstrap: [
+            __dirname + '/node_modules/bootstrap/dist/css/bootstrap.min.css',
+            __dirname + '/node_modules/bootstrap/dist/css/bootstrap-theme.min.css'
         ]
     },
     output: {
