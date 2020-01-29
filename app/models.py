@@ -15,6 +15,10 @@ class ObsoleteStatus(enum.Enum):
     Yes = 'Yes'
     No = 'No'
 
+class AffectedStatus(enum.Enum):
+    Affected = 'Affected'
+    Unaffected = 'Unaffected'
+
 class User(UserMixin, db.Model) :
 
     id = db.Column(db.Integer, primary_key=True)
@@ -41,6 +45,7 @@ class Sample(db.Model):
     FamilyID = db.Column(db.String(30), db.ForeignKey('family.FamilyID',onupdate="cascade",ondelete="cascade"), nullable=False)
     SampleType = db.Column(db.String(30))
     TissueType = db.Column(db.String(30))
+    AffectedStatus = db.Column(db.Enum(AffectedStatus), default=None, server_default=None)
     PhenomeCentralSampleID = db.Column(db.String(45))
     samples = db.relationship("Dataset", backref='sample', lazy='dynamic')
 
