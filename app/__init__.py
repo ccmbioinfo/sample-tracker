@@ -17,7 +17,8 @@ csp = {
 
 app = Flask(__name__, static_folder='../static/dist', template_folder='../static')
 app.config.from_object(Config)
-talisman = Talisman(app, content_security_policy=csp)
+if app.env == 'production':
+	talisman = Talisman(app, content_security_policy=csp)
 csrf = CSRFProtect(app)
 login = LoginManager(app)
 login.login_view = "login"
