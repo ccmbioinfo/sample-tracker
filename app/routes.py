@@ -60,6 +60,7 @@ def resetpassword():
 @app.route("/CohortStats")
 @app.route("/SampleUploader")
 @app.route("/GeneReports")
+@app.route("/admin")
 @login_required
 def redirect_to_index():
     return redirect(url_for('index'))
