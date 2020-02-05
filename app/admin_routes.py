@@ -36,7 +36,7 @@ def user_list():
 	return json.dumps(users)
 
 
-@app.route('/admin/users', methods=['POST'])
+@app.route('/admin/users', methods=('POST', 'PUT'))
 @login_required
 def create_update_user():
 	if current_user.accessLevel != AccessLevel.Admin:
@@ -87,3 +87,23 @@ def update_user(user: User, form: UserForm):
 	except:
 		db.session.rollback()
 		return abort(500)
+
+
+@app.route('/admin/users', methods=['DELETE'])
+@login_required
+def delete_user():
+	if current_user.accessLevel != AccessLevel.Admin:
+		return abort(401)
+
+	form = UserForm()
+	if form.validate_on_submit():
+		user = User.query.filter_by(username=form.username.data)
+		if user is None:
+			return abort(404)
+		try:
+			db.session.delete(user)
+			db.session.commit()
+			return Response(status=204)
+		except:
+			db.session.rollback()
+			return abort(500)
