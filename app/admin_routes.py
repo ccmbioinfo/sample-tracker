@@ -19,7 +19,7 @@ def user_list():
 		{
 			'username': user.username,
 			'email': user.email,
-			'accessLevel': user.accessLevel.value
+			'isAdmin': user.accessLevel == AccessLevel.Admin
 		}
 		for user in db_users
 	]
