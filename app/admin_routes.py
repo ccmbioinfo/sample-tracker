@@ -1,21 +1,11 @@
 import json
 
-from flask import abort, Response
+from flask import abort, Response, request
 from flask_login import current_user, login_required
-from flask_wtf import FlaskForm
-from wtforms import BooleanField, PasswordField, StringField, validators
 from werkzeug.security import generate_password_hash
 
 from app import app, db
 from app.models import User, AccessLevel
-
-
-class UserForm(FlaskForm):
-	username = StringField('Username', [validators.Length(min=4, max=30)])
-	email = StringField('Email')
-	isAdmin = BooleanField('Admin?')
-	password = PasswordField('Password')
-	confirmPassword = PasswordField('Confirm password')
 
 
 @app.route('/admin/users', methods=['GET'])
@@ -36,29 +26,39 @@ def user_list():
 	return json.dumps(users)
 
 
+def validate(request_user: dict):
+	if 'username' in request_user and 4 <= len(request_user['username']) <= 30:
+		if 'password' in request_user:
+			return 'confirmPassword' in request_user and len(request_user['password']) >= 4 and \
+				request_user['password'] == request_user['confirmPassword']
+		return True
+	return False
+
+
 @app.route('/admin/users', methods=('POST', 'PUT'))
 @login_required
 def create_update_user():
 	if current_user.accessLevel != AccessLevel.Admin:
 		return abort(401)
 
-	form = UserForm()
-	if form.validate_on_submit():
-		user = User.query.filter_by(username=form.username.data)
-		if user is None:
-			return create_user(form)
-		return update_user(user, form)
+	rq_user = request.get_json()
+	if validate(rq_user):
+		db_user = User.query.filter_by(username=rq_user.username)
+		if db_user is None:
+			return create_user(rq_user)
+		return update_user(db_user, rq_user)
 	else:
 		return abort(400)
 
 
-def create_user(form: UserForm):
-	if form.password.data and len(form.password.data) >= 4 and form.password.data == form.confirmPassword.data:
+def create_user(rq_user: dict):
+	if 'password' in rq_user and 'email' in rq_user:
+		role = AccessLevel.Admin if 'isAdmin' in rq_user and rq_user['isAdmin'] else AccessLevel.Regular
 		user = User(
-			username=form.username.data,
-			email=form.email.data,
-			password=generate_password_hash(form.password.data),
-			accessLevel=AccessLevel.Admin if form.isAdmin.data else AccessLevel.Regular
+			username=rq_user['username'],
+			email=rq_user['email'],
+			password=generate_password_hash(rq_user['password']),
+			accessLevel=role
 		)
 		db.session.add(user)
 		try:
@@ -71,16 +71,14 @@ def create_user(form: UserForm):
 		return abort(400)
 
 
-def update_user(user: User, form: UserForm):
-	if form.password.data:
-		if len(form.password.data) >= 4 and form.password.data == form.confirmPassword.data:
-			user.update({'password': generate_password_hash(form.password.data)})
-		else:
-			return abort(400)
-	user.update({
-		'email': form.email,
-		'accessLevel': AccessLevel.Admin if form.isAdmin.data else AccessLevel.Regular
-	})
+def update_user(db_user: User, rq_user: dict):
+	if 'password' in rq_user:
+		db_user.update({'password': generate_password_hash(rq_user['password'])})
+	if 'email' in rq_user:
+		db_user.update({'email': rq_user['email']})
+	if 'isAdmin' in rq_user:
+		role = AccessLevel.Admin if rq_user['isAdmin'] else AccessLevel.Regular
+		db_user.update({'accessLevel': role})
 	try:
 		db.session.commit()
 		return Response(status=201)
@@ -95,13 +93,13 @@ def delete_user():
 	if current_user.accessLevel != AccessLevel.Admin:
 		return abort(401)
 
-	form = UserForm()
-	if form.validate_on_submit():
-		user = User.query.filter_by(username=form.username.data)
-		if user is None:
+	rq_user = request.get_json()
+	if validate(rq_user):
+		db_user = User.query.filter_by(username=rq_user['username'])
+		if db_user is None:
 			return abort(404)
 		try:
-			db.session.delete(user)
+			db.session.delete(db_user)
 			db.session.commit()
 			return Response(status=204)
 		except:
