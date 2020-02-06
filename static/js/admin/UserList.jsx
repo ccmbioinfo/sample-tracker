@@ -53,7 +53,7 @@ export default class UserList extends React.Component {
                             <Col xs={2}><h4>Actions</h4></Col>
                         </Row>
                         {this.state.userList.map(user => (
-                            <Row key={user}>
+                            <Row key={user.username} style={{paddingBottom: '0.25em'}}>
                                 <Col xs={1}>{user.username}</Col>
                                 <Col xs={2}>{user.email}</Col>
                                 <Col xs={1}><Checkbox inline defaultChecked={user.isAdmin}/></Col>

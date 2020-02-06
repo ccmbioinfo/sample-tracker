@@ -49,7 +49,7 @@ export default class CreateUserModal extends React.Component {
                       <FormGroup>
                           <ControlLabel>Username</ControlLabel>
                           <FormControl
-                              type="text" placeholder="minimum 4 characters" autoComplete="off"
+                              type="text" placeholder="minimum 4 characters" autoComplete="off" required
                               value={this.state.username}
                               onChange={e => this.setState({ username: e.target.value })}
                           />
@@ -57,19 +57,19 @@ export default class CreateUserModal extends React.Component {
                       <FormGroup>
                           <ControlLabel>Email</ControlLabel>
                           <FormControl
-                              type="email" placeholder="somebody@sickkids.ca" autoComplete="off"
+                              type="email" placeholder="somebody@sickkids.ca" autoComplete="off" required
                               value={this.state.email}
                               onChange={e => this.setState({ email: e.target.value })}
                           />
                       </FormGroup>
                       <Checkbox checked={this.state.isAdmin}
-                                onChange={e => this.setState({ isAdmin: e.target.value })}>
+                                onChange={e => this.setState({ isAdmin: e.target.checked })}>
                           Admin?
                       </Checkbox>
                       <FormGroup>
                           <ControlLabel>Password (minimum 4 characters)</ControlLabel>
                           <FormControl
-                              type="password" autoComplete="new-password"
+                              type="password" autoComplete="new-password" required
                               value={this.state.password}
                               onChange={e => this.setState({ password: e.target.value })}
                           />
@@ -77,7 +77,7 @@ export default class CreateUserModal extends React.Component {
                       <FormGroup>
                           <ControlLabel>Confirm password</ControlLabel>
                           <FormControl
-                              type="password" autoComplete="new-password"
+                              type="password" autoComplete="new-password" required
                               value={this.state.confirmPassword}
                               onChange={e => this.setState({ confirmPassword: e.target.value })}
                           />
