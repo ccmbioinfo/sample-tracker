@@ -43,7 +43,7 @@ def create_update_user():
 
 	rq_user = request.get_json()
 	if validate(rq_user):
-		db_user = User.query.filter_by(username=rq_user.username)
+		db_user = User.query.filter_by(username=rq_user['username']).first()
 		if db_user is None:
 			return create_user(rq_user)
 		return update_user(db_user, rq_user)
@@ -81,7 +81,7 @@ def update_user(db_user: User, rq_user: dict):
 		db_user.update({'accessLevel': role})
 	try:
 		db.session.commit()
-		return Response(status=201)
+		return Response(status=204)
 	except:
 		db.session.rollback()
 		return abort(500)
@@ -95,7 +95,7 @@ def delete_user():
 
 	rq_user = request.get_json()
 	if validate(rq_user):
-		db_user = User.query.filter_by(username=rq_user['username'])
+		db_user = User.query.filter_by(username=rq_user['username']).first()
 		if db_user is None:
 			return abort(404)
 		try:
