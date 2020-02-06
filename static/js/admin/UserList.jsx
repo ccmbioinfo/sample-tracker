@@ -6,22 +6,33 @@ import Row from "react-bootstrap/lib/Row";
 import Col from "react-bootstrap/lib/Col";
 import Checkbox from "react-bootstrap/lib/Checkbox";
 import FormControl from "react-bootstrap/lib/FormControl";
+import CreateUserModal from "./CreateUserModal";
 
 export default class UserList extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            userList: []
+            userList: [],
+            addingUser: false
         };
+        this.showAddingUser = this.showAddingUser.bind(this);
+        this.hideAddingUser = this.hideAddingUser.bind(this);
     }
     componentDidMount() {
         fetch("/admin/users")
             .then(response => response.json())
             .then(userList => this.setState({ userList }));
     }
+    showAddingUser() {
+        this.setState({ addingUser: true });
+    }
+    hideAddingUser() {
+        this.setState({ addingUser: false });
+    }
     render() {
         return (
             <Panel>
+                <CreateUserModal show={this.state.addingUser} onHide={this.hideAddingUser} />
                 <Panel.Heading style={{
                     paddingTop: '1em',
                     paddingBottom: '1em',
@@ -30,7 +41,7 @@ export default class UserList extends React.Component {
                     alignItems: 'center'
                 }}>
                     <Panel.Title componentClass="h3">Users</Panel.Title>
-                    <Button bsStyle="primary">Add new</Button>
+                    <Button bsStyle="primary" onClick={this.showAddingUser}>Add new</Button>
                 </Panel.Heading>
                 <Panel.Body>
                     <Grid fluid>
@@ -42,15 +53,15 @@ export default class UserList extends React.Component {
                             <Col xs={2}><h4>Actions</h4></Col>
                         </Row>
                         {this.state.userList.map(user => (
-                            <Row>
+                            <Row key={user}>
                                 <Col xs={1}>{user.username}</Col>
                                 <Col xs={2}>{user.email}</Col>
-                                <Col xs={1}><Checkbox inline checked={user.isAdmin}/></Col>
+                                <Col xs={1}><Checkbox inline defaultChecked={user.isAdmin}/></Col>
                                 <Col xs={3}>
-                                    <FormControl type="password" placeholder="New password" autocomplete="new-password"/>
+                                    <FormControl type="password" placeholder="New password" autoComplete="new-password"/>
                                 </Col>
                                 <Col xs={3}>
-                                    <FormControl type="password" placeholder="Confirm password" autocomplete="new-password"/>
+                                    <FormControl type="password" placeholder="Confirm password" autoComplete="new-password"/>
                                 </Col>
                                 <Col xs={2}>
                                     <Button bsStyle="primary" style={{marginRight: '0.25em'}}>Update</Button>
