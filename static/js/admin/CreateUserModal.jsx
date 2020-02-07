@@ -5,19 +5,26 @@ import ControlLabel from "react-bootstrap/lib/ControlLabel";
 import FormControl from "react-bootstrap/lib/FormControl";
 import Checkbox from "react-bootstrap/lib/Checkbox";
 import Button from "react-bootstrap/lib/Button";
+import Alert from "react-bootstrap/lib/Alert";
 
 
 export default class CreateUserModal extends React.Component {
     constructor(props) {
         super(props);
-        this.state = {
+        this.createState = this.createState.bind(this);
+        this.submit = this.submit.bind(this);
+        this.state = this.createState(props);
+    }
+    createState(props) {
+        return {
             username: props.username || "",
             email: props.email || "",
             isAdmin: !!props.isAdmin,
             password: props.password || "",
-            confirmPassword: props.confirmPassword || ""
+            confirmPassword: props.confirmPassword || "",
+            errorNoMatch: !!props.errorNoMatch,
+            errorIntegrity: !!props.errorIntegrity
         };
-        this.submit = this.submit.bind(this);
     }
     submit(e) {
         e.preventDefault();
@@ -31,9 +38,13 @@ export default class CreateUserModal extends React.Component {
             body: JSON.stringify(this.state)
         }).then(response => {
             if (response.ok) {
-                this.props.onHide();
+                this.props.onSuccess(this.state);
+                this.setState(this.createState(this.props)); // reset to default
             } else {
-                alert(response.status);
+                this.setState({
+                    errorNoMatch: response.status === 400,
+                    errorIntegrity: response.status !== 400
+                });
             }
         });
 
@@ -45,6 +56,8 @@ export default class CreateUserModal extends React.Component {
                   <Modal.Title>New user</Modal.Title>
               </Modal.Header>
               <Modal.Body>
+                  {this.state.errorNoMatch && <Alert bsStyle="danger">Passwords do not match or length requirement not satisfied.</Alert>}
+                  {this.state.errorIntegrity && <Alert bsStyle="danger">User or email already exists.</Alert>}
                   <form onSubmit={this.submit}>
                       <FormGroup>
                           <ControlLabel>Username</ControlLabel>

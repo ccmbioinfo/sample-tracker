@@ -17,6 +17,7 @@ export default class UserList extends React.Component {
         };
         this.showAddingUser = this.showAddingUser.bind(this);
         this.hideAddingUser = this.hideAddingUser.bind(this);
+        this.addUser = this.addUser.bind(this);
     }
     componentDidMount() {
         fetch("/admin/users")
@@ -29,10 +30,16 @@ export default class UserList extends React.Component {
     hideAddingUser() {
         this.setState({ addingUser: false });
     }
+    addUser(user) {
+        this.setState({
+           userList: this.state.userList.concat(user)
+        });
+        this.hideAddingUser();
+    }
     render() {
         return (
             <Panel>
-                <CreateUserModal show={this.state.addingUser} onHide={this.hideAddingUser} />
+                <CreateUserModal show={this.state.addingUser} onHide={this.hideAddingUser} onSuccess={this.addUser} />
                 <Panel.Heading style={{
                     paddingTop: '1em',
                     paddingBottom: '1em',
