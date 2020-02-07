@@ -47,7 +47,6 @@ export default class CreateUserModal extends React.Component {
                 });
             }
         });
-
     }
     render() {
         return (

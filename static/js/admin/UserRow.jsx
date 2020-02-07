@@ -9,6 +9,8 @@ export default class UserRow extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
+            username: this.props.username,
+            email: this.props.email,
             isAdmin: !!props.isAdmin,
             password: props.password || "",
             confirmPassword: props.confirmPassword || ""
@@ -16,9 +18,9 @@ export default class UserRow extends React.Component {
     }
     render() {
         return (
-            <Row key={this.props.username} style={{paddingBottom: '0.25em'}}>
-                <Col xs={1}>{this.props.username}</Col>
-                <Col xs={2}>{this.props.email}</Col>
+            <Row style={{paddingBottom: '0.25em'}}>
+                <Col xs={1}>{this.state.username}</Col>
+                <Col xs={2}>{this.state.email}</Col>
                 <Col xs={1}>
                     <Checkbox
                         inline checked={this.state.isAdmin}
@@ -48,6 +50,6 @@ export default class UserRow extends React.Component {
                     <Button bsStyle="danger" onClick={() => this.props.onDelete(this.state)}>Delete</Button>
                 </Col>
             </Row>
-        )
+        );
     }
 }

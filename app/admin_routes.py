@@ -105,3 +105,5 @@ def delete_user():
 		except:
 			db.session.rollback()
 			return abort(500)
+	else:
+		return abort(400)
