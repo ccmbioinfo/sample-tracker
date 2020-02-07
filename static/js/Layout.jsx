@@ -7,6 +7,7 @@ import {Navbar, Nav, NavItem, NavDropdown, MenuItem} from 'react-bootstrap';
 import {Link, Route, Redirect} from 'react-router-dom';
 import {LinkContainer} from 'react-router-bootstrap';
 import {GET_LOGGED_USER, LOGOUT} from './Url.jsx';
+import UserList from "./admin/UserList";
 
 const auth_gene_report_users = new Set(["eprice", "gediae", "thartley", "maosmond", "care4rare", "mgillespie", "test"])
 
@@ -15,7 +16,7 @@ export default class Layout extends React.Component{
 	constructor(props) {
 		super(props);
 		this.state = {
-			
+
 			username: "",
 			accessLevel: "",
 		};
@@ -48,7 +49,7 @@ export default class Layout extends React.Component{
   					</Navbar.Brand>
   				</Navbar.Header>
   				<Nav>
-                    
+
                         <LinkContainer to="/CohortStats">
     					    <NavItem eventKey={1}>
       						    Dashboard
@@ -71,6 +72,13 @@ export default class Layout extends React.Component{
 								</NavItem>
 							</LinkContainer>
 						}
+                    {this.state.accessLevel === "Admin" &&
+                            <LinkContainer to="/admin">
+								<NavItem eventKey={6}>
+									Admin
+								</NavItem>
+							</LinkContainer>
+                    }
     			</Nav>
                 <Nav pullRight>
     					<NavItem eventKey={4}  onClick={this.logout}>
@@ -86,8 +94,11 @@ export default class Layout extends React.Component{
      				)}/>
 				<Route path="/SearchBox" component={SearchBox}/>
                 <Route path = "/CohortStats" component={CohortStats}/>
-                <Route path="/SampleUploader" component={SampleUploader}/>  
-                <Route path="/GeneReports" render={(props) => <GeneReports username={this.state.username}/>}/>  
+                <Route path="/SampleUploader" component={SampleUploader}/>
+                <Route path="/GeneReports" render={(props) => <GeneReports username={this.state.username}/>}/>
+                {this.state.accessLevel === "Admin" &&
+                <Route path="/admin" component={UserList}/>
+                }
   			</div>
   		</div>
 

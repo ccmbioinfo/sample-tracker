@@ -28,3 +28,4 @@ migrate=Migrate(app,db)
 
 from app import gene_report_routes
 from app import routes
+from app import admin_routes

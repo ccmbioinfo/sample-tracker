@@ -7,7 +7,7 @@ from sqlalchemy.sql import func
 from sqlalchemy import update
 from app.non_route_functions import *
 from flask_wtf.csrf import CSRFError
-from werkzeug.security import generate_password_hash 
+from werkzeug.security import generate_password_hash
 
 import time
 import datetime as dt
@@ -31,7 +31,7 @@ def login():
 
     return render_template('Login.html',title="Login",error=0, form=form)
 
-@app.route('/resetpassword', methods=('GET','POST')) 
+@app.route('/resetpassword', methods=('GET','POST'))
 def resetpassword():
     errorStr = 0
     successStr = 0
@@ -50,7 +50,7 @@ def resetpassword():
                 try:
                     user_obj.update({'password':generate_password_hash(prForm.newpassword.data)})
                     db.session.commit()
-                    successStr ="Password updated successfully!"     
+                    successStr ="Password updated successfully!"
                 except:
                     db.session.rollback()
                     errorStr="Cannot update password! Contact administrator."
@@ -59,8 +59,8 @@ def resetpassword():
 @app.route("/SearchBox")
 @app.route("/CohortStats")
 @app.route("/SampleUploader")
-@app.route("/Adminboard")
 @app.route("/GeneReports")
+@app.route("/admin")
 @login_required
 def redirect_to_index():
     return redirect(url_for('index'))
@@ -85,13 +85,13 @@ def index():
 @login_required
 def uploadTemplate():
 
-    return send_file(os.path.dirname(app.instance_path)+"/static/files/upload.xlsx") 
+    return send_file(os.path.dirname(app.instance_path)+"/static/files/upload.xlsx")
 
 @app.route("/files/updateTemplate")
 @login_required
 def updateTemplate():
 
-    return send_file(os.path.dirname(app.instance_path)+"/static/files/update.xlsx") 
+    return send_file(os.path.dirname(app.instance_path)+"/static/files/update.xlsx")
 
 @app.route('/fetch/cohort_list')
 @login_required
@@ -109,7 +109,7 @@ def get_uploadCenterList():
     if current_user.accessLevel.value == 'Regular':
         query  = query.filter(Uploaders.UploadUser==current_user.username)
 
-    results = query.distinct().all() 
+    results = query.distinct().all()
     for uploader in results:
         uploaders.append(uploader.UploadCenter)
 
@@ -148,7 +148,7 @@ def get_uploadUserList():
 
     if current_user.accessLevel.value == 'Regular':
         subQuery =  db.session.query(Uploaders).filter(Uploaders.UploadUser==current_user.username).subquery()
-        query = query.filter(Uploaders.UploadCenter==subQuery.c.UploadCenter)    
+        query = query.filter(Uploaders.UploadCenter==subQuery.c.UploadCenter)
 
     for uploader in query.all():
         uploadUsers.append(uploader.UploadUser)
@@ -171,7 +171,7 @@ def get_userList():
 @app.route('/fetchFamilyInfo/<familyID>')
 @login_required
 def fetchFamilyInfo(familyID):
-	
+
 	family = {"probands":[],"parents":[]}
 	results = db.session.query(Family,Sample).join(Sample).filter(Family.FamilyID==familyID).all()
 	for row in results:
@@ -200,13 +200,13 @@ def fetchDatasets(sampleID):
             analysisDetails = fetchAnalysisHistory(analysisRow.AnalysisID)
             analyses[analysisRow.AnalysisID] = json.loads(analysisDetails)
 
-        datasets.append({"DatasetID":row.Dataset.DatasetID, "Cohorts": cohorts, "Analyses": analyses, "DatasetType": row.Dataset.DatasetType, "EnteredDate": row.Dataset.EnteredDate, "UploadStatus": row.Dataset.UploadStatus, "UploadCenter": row.Uploaders.UploadCenter, "UploadUser": row.Uploaders.UploadUser, "InputFile": row.Dataset.InputFile, "RunID": row.Dataset.RunID, "HPFPath": row.Dataset.HPFPath, "SolvedStatus": row.Dataset.SolvedStatus,"Notes": row.Dataset.Notes })		
+        datasets.append({"DatasetID":row.Dataset.DatasetID, "Cohorts": cohorts, "Analyses": analyses, "DatasetType": row.Dataset.DatasetType, "EnteredDate": row.Dataset.EnteredDate, "UploadStatus": row.Dataset.UploadStatus, "UploadCenter": row.Uploaders.UploadCenter, "UploadUser": row.Uploaders.UploadUser, "InputFile": row.Dataset.InputFile, "RunID": row.Dataset.RunID, "HPFPath": row.Dataset.HPFPath, "SolvedStatus": row.Dataset.SolvedStatus,"Notes": row.Dataset.Notes })
     return json.dumps(datasets,default=str)
 
 @app.route('/fetchAnalysisHistory/<analysisID>')
 @login_required
 def fetchAnalysisHistory(analysisID):
-	
+
     analysisHistory = {'PipelineVersion':'', 'history': []}
     results = db.session.query(Analysis,AnalysisStatus,User).join(AnalysisStatus).join(User).filter(Analysis.AnalysisID==analysisID).order_by(AnalysisStatus.UpdateDate.desc()).all()
     for row in results:
@@ -221,7 +221,7 @@ def fetchAnalysisHistory(analysisID):
 @login_required
 def checkAndFetchSampleInformation(SampleID):
 
-    results = db.session.query(Sample).filter(Sample.SampleID==SampleID).all() 
+    results = db.session.query(Sample).filter(Sample.SampleID==SampleID).all()
     if current_user.accessLevel.value != 'Admin':
         if len(results) > 0:
             if db.session.query(Project,Projects2Users,Cohort,Dataset).join(Projects2Users,Cohort).join(Dataset).filter(Projects2Users.userID==current_user.id).filter(Dataset.SampleID==SampleID).count() == 0:
@@ -240,14 +240,14 @@ def checkAndFetchSampleInformation(SampleID):
 @app.route('/checkAndFetchProjectInformation/<CohortName>')
 @login_required
 def checkAndFetchProjectInformation(CohortName):
- 
+
     results = db.session.query(Project).join(Cohort).filter(Cohort.CohortName==CohortName).all()
 
     if current_user.accessLevel.value != 'Admin':
-        if len(results) > 0: 
-            if db.session.query(Project,Projects2Users,Cohort).join(Projects2Users,Cohort).filter(Cohort.CohortName==CohortName).filter(Projects2Users.userID==current_user.id).count() == 0: 
+        if len(results) > 0:
+            if db.session.query(Project,Projects2Users,Cohort).join(Projects2Users,Cohort).filter(Cohort.CohortName==CohortName).filter(Projects2Users.userID==current_user.id).count() == 0:
                 return json.dumps({},default=str)
-    ProjectName = '' 
+    ProjectName = ''
     for row in results:
         return json.dumps({'ProjectName': row.ProjectName},default=str)
     return json.dumps({},default=str)
@@ -255,10 +255,10 @@ def checkAndFetchProjectInformation(CohortName):
 @app.route('/fetch/projectList')
 @login_required
 def fetchProjectList():
-    
+
     projectList = []
     projectResults = None
-    
+
     if current_user.accessLevel.value != 'Admin':
         projectResults = db.session.query(Project).join(Projects2Users).filter(Projects2Users.userID==current_user.id).all()
     else:
@@ -277,7 +277,7 @@ def fetchProjectList():
 @app.route('/checkIFSampleExists/<SampleID>')
 @login_required
 def checkIFSampleExists(SampleID):
-   
+
     return json.dumps({'Exists':db.session.query(Sample).filter(Sample.SampleID==SampleID).count()},default=str)
 
 @app.route('/fetch/UploadUserSamples/<CohortName>')
@@ -286,12 +286,12 @@ def get_upload_user_samples(CohortName):
 
     if CohortName not in fetch_cohorts(current_user.id,current_user.accessLevel.value).values():
         return json.dumps({'Status': 'Access Error'},default=str)
- 
-    users = {}    
+
+    users = {}
     samples = []
     results = db.session.query(Family,Sample,Dataset,Cohort,Uploaders,Analysis,AnalysisStatus).join(Sample).join(Dataset).join(Cohort,Uploaders,Analysis).join(AnalysisStatus).filter(Cohort.CohortName==CohortName).order_by(Dataset.EnteredDate.desc()).all()
     addedDatasets = []
-    
+
     for user in db.session.query(User).all():
         users[str(user.id)] = user.username
 
@@ -303,7 +303,7 @@ def get_upload_user_samples(CohortName):
             notes_info = 'Last updated date and user info not available'
             if row.Dataset.NotesLastUpdatedBy is not None and row.Dataset.NotesLastUpdatedDate is not None:
                 if str(row.Dataset.NotesLastUpdatedBy) in users:
-                    #notes_info = "Last updated by " + users[str(row.Dataset.NotesLastUpdatedBy)] + " on " + str(row.Dataset.NotesLastUpdatedDate) 
+                    #notes_info = "Last updated by " + users[str(row.Dataset.NotesLastUpdatedBy)] + " on " + str(row.Dataset.NotesLastUpdatedDate)
                     notes_info = "Last updated by " + users[str(row.Dataset.NotesLastUpdatedBy)] + " on " + dt.datetime.strptime(str(row.Dataset.NotesLastUpdatedDate),'%Y-%m-%d').strftime('%B %d, %Y')
 
             samples.append({'FamilyID': row.Family.FamilyID, \
@@ -340,7 +340,7 @@ def get_upload_user_samples(CohortName):
 @app.route('/fetch/search_cohort/<searchterm>/<searchvalue>')
 @login_required
 def get_samples_in_cohort(searchterm,searchvalue):
-	
+
     samples = []
     results = []
 
@@ -360,7 +360,7 @@ def get_samples_in_cohort(searchterm,searchvalue):
         for family_id in searchvalue.split(','):
             family_id = family_id.strip()
             results.extend(cohortbaseQuery.filter(Family.FamilyID.like(family_id+"%")).all())
-    
+
     elif searchterm == 'sampleSelect':
         for sample_id in searchvalue.split(','):
             sample_id = sample_id.strip()
@@ -379,10 +379,10 @@ def get_samples_in_cohort(searchterm,searchvalue):
             if searchvalue == 'ALL':
                 results = cohortbaseQuery.all()
             else:
-                results = cohortbaseQuery.filter(Analysis.AssignedTo==searchvalue).all() 
+                results = cohortbaseQuery.filter(Analysis.AssignedTo==searchvalue).all()
 
     elif searchterm == 'pipelineSelect':
-        results = cohortbaseQuery.filter(Analysis.PipelineVersion==searchvalue).all()        
+        results = cohortbaseQuery.filter(Analysis.PipelineVersion==searchvalue).all()
 
     elif searchterm == 'uploadCenterSelect':
         if searchvalue=='ALL':
@@ -407,7 +407,7 @@ def get_samples_in_cohort(searchterm,searchvalue):
     else:
         pass
 
-    addedDatasets = [] 
+    addedDatasets = []
     for row in results:
         modifyIndex = -1
         if row.Dataset.DatasetID in addedDatasets: # if dataset is already added, get its index and check if current analysis date is higher than the previous
@@ -433,7 +433,7 @@ def get_samples_in_cohort(searchterm,searchvalue):
                 samples[modifyIndex]['AnalysisStatus'] = row.AnalysisStatus.AnalysisStep
                 samples[modifyIndex]['AnalysisDate'] = row.AnalysisStatus.UpdateDate
     if searchterm=='analysisSelect':
-        samples = list(filter(lambda record: record['AnalysisStatus'].lower() == searchvalue.lower(),samples)) 
+        samples = list(filter(lambda record: record['AnalysisStatus'].lower() == searchvalue.lower(),samples))
     return json.dumps(samples,default=str)
 
 
@@ -449,7 +449,7 @@ def get_samples_in_cohort_by_date(dateType,startDate,endDate):
     if startDate!=0:
         startDate = dt.datetime.utcfromtimestamp(startDate/1000).strftime("%Y-%m-%d")
     if endDate!=0:
-        endDate = dt.datetime.utcfromtimestamp(endDate/1000).strftime("%Y-%m-%d")	
+        endDate = dt.datetime.utcfromtimestamp(endDate/1000).strftime("%Y-%m-%d")
     else:
         endDate = dt.datetime.utcfromtimestamp(time.time()).strftime("%Y-%m-%d")
 
@@ -488,14 +488,14 @@ def get_samples_in_cohort_by_date(dateType,startDate,endDate):
                 samples[modifyIndex]['AnalysisStatus'] = row.AnalysisStatus.AnalysisStep
                 samples[modifyIndex]['AnalysisDate'] = row.AnalysisStatus.UpdateDate
     return json.dumps(samples,default=str)
-	
+
 
 @app.route('/checkInputForm/<field>/<value>')
 @login_required
 def checkInputForm(field,value):
 
     if  current_user.accessLevel.value == 'Admin':
-        return json.dumps({'Status': 'Success'},default=str) 
+        return json.dumps({'Status': 'Success'},default=str)
 
     if field == 'FamilyID':
         if db.session.query(Sample).filter(Sample.FamilyID==value).count() > 0: #if familyID exists
@@ -515,9 +515,9 @@ def checkInputForm(field,value):
                 return json.dumps({'Status': 'Error'},default=str)
     else:
         return json.dumps({'Status': 'Success'},default=str)
-        
+
     return json.dumps({'Status': 'Success'},default=str)
- 
+
 
 @app.route('/checkUpdateSamples',methods=["POST"])
 @login_required
@@ -533,10 +533,10 @@ def checkUpdateSamples():
         for sampleRecord in postObj['samples']:
 
             if 'SampleID' in sampleRecord and 'DatasetType' in sampleRecord and 'EnteredDate' in sampleRecord:
-                
+
                 datasetID = -1
                 datasetIDQuery = db.session.query(Dataset,Analysis).join(Analysis).filter(Dataset.SampleID==sampleRecord['SampleID']).filter(Dataset.DatasetType==sampleRecord['DatasetType']).filter(Analysis.RequestedDate==sampleRecord['EnteredDate'])
-                if datasetIDQuery.count() != 1: 
+                if datasetIDQuery.count() != 1:
                     retStr['Errors'].append("Cannot find dataset matching Sample: "+sampleRecord['SampleID']+" , Type: "+sampleRecord['DatasetType']+", EnteredDate: "+sampleRecord['EnteredDate'])
                 else:
 
@@ -547,9 +547,9 @@ def checkUpdateSamples():
                         if db.session.query(Project,Projects2Users,Cohort,Dataset).join(Projects2Users,Cohort).join(Dataset).filter(Projects2Users.userID==current_user.id).filter(Dataset.DatasetID==datasetID).count() == 0:
                             retStr['Errors'].append("You dont have permissions to edit the dataset matching Sample: "+sampleRecord['SampleID']+" , Type: "+sampleRecord['DatasetType']+", EnteredDate: "+sampleRecord['EnteredDate'])
             else:
-                retStr['Errors'].append("Sample " + SampleID + "is missing some data")  
+                retStr['Errors'].append("Sample " + SampleID + "is missing some data")
     else:
-        retStr['Errors'].append('No data!')             
+        retStr['Errors'].append('No data!')
     return json.dumps(retStr,default=str)
 
 @app.route('/fetch/cohort_stats/<project>')
@@ -557,10 +557,10 @@ def checkUpdateSamples():
 def get_cohort_stats(project):
 
     cohorts = []
-    tmpCohort = {}   
- 
-    for cohortID,cohortName in fetch_cohorts(current_user.id,current_user.accessLevel.value,project).items(): 
-        
+    tmpCohort = {}
+
+    for cohortID,cohortName in fetch_cohorts(current_user.id,current_user.accessLevel.value,project).items():
+
         tmpObj = {}
         tmpObj['CohortName'] = cohortName
         tmpObj['CohortID'] = cohortID
@@ -574,22 +574,22 @@ def get_cohort_stats(project):
             if result.Dataset.SampleID not in tmpObj['pendingSamples']:
                 tmpObj['pendingSamples'].append(result.Dataset.SampleID)
 
-        tmpObj['Processed'] = int(tmpObj['Samples']) - len(tmpObj['pendingSamples'])    
+        tmpObj['Processed'] = int(tmpObj['Samples']) - len(tmpObj['pendingSamples'])
         if cohortName == 'Temp':
             tmpCohort = tmpObj
         else:
             cohorts.append(tmpObj)
-    
-    cohorts.sort(key=lambda c: c['CohortName']) 
+
+    cohorts.sort(key=lambda c: c['CohortName'])
     if 'CohortName' in tmpCohort:
         cohorts.insert(0,tmpCohort)
-   
+
     return json.dumps(cohorts,default=str)
 
 @app.route('/requestReanalysis',methods=["POST"])
 @login_required
 def requestReanalysis():
-    
+
         postObj = {}
         retStr = {'Status':'Error'}
         if request.method == 'POST':
@@ -628,8 +628,8 @@ def requestReanalysis():
                 db.session.rollback()
         else:
             db.session.rollback()
-        
-        return json.dumps(retStr,default=str)    
+
+        return json.dumps(retStr,default=str)
 
 @app.route('/updateAnalysisStatus',methods=["POST"])
 @login_required
@@ -642,9 +642,9 @@ def updateAnalysisStatus():
 
         else:
             return json.dumps(retStr,default=str)
-  
+
         # check for postObj updateTo values in allowed set
-        today = dt.datetime.now().strftime('%Y-%m-%d  %H:%M:%S') 
+        today = dt.datetime.now().strftime('%Y-%m-%d  %H:%M:%S')
         updateSuccess = 1
         newStatusRows = []
         if 'datasets' in postObj and 'updateTo' in postObj:
@@ -660,7 +660,7 @@ def updateAnalysisStatus():
                             break
                     else:
                         newStatusRows.append(AnalysisStatus(AnalysisID=dataSet['analysisID'],AnalysisStep=postObj['updateTo'],UpdateDate=today,UpdateUser=current_user.id))
-        
+
         if updateSuccess == 1:
 
             db.session.bulk_save_objects(newStatusRows)
@@ -687,7 +687,7 @@ def updateDatasetFields():
 
         else:
             return json.dumps(retStr,default=str)
-  
+
         # check for postObj updateTo values in allowed set
         updateSuccess = 1
         if 'datasets' in postObj and 'updateTo' in postObj and 'field' in postObj:
@@ -699,7 +699,7 @@ def updateDatasetFields():
                         if check_if_dataset_exists(sample_id, postObj['updateTo']):
                             retStr={'Status': 'Error! This dataset already exists for this sample. Dataset type is not updated in database. Please refresh the browser to see the original value.'}
                             updateSuccess = 0
-                            break  
+                            break
                     try:
                         db.session.query(Dataset).filter(Dataset.DatasetID==dataSet['datasetID']).update({postObj['field']: postObj['updateTo']})
                         if postObj['field'] == 'Notes':
@@ -718,7 +718,7 @@ def updateDatasetFields():
             db.session.rollback()
 
         return json.dumps(retStr,default=str)
-        
+
 @app.route('/addDatasets2Cohort',methods=["POST"])
 @login_required
 def addDatasets2Cohort():
@@ -735,7 +735,7 @@ def addDatasets2Cohort():
 
     if 'add2ExistingCohort' in postObj and len(postObj['add2ExistingCohort']) >0:
         newOrUpdate = 'existing'
-        cohortID = postObj['add2ExistingCohort'] 
+        cohortID = postObj['add2ExistingCohort']
 
     else:
         if 'add2NewCohort' in postObj and len(postObj['add2NewCohort']) >=5:
@@ -755,7 +755,7 @@ def addDatasets2Cohort():
         except:
             db.session.rollback()
             return json.dumps(retStr,default=str)
-        cohortID = NewCohort.CohortID         
+        cohortID = NewCohort.CohortID
 
     if cohortID == -1:
         return json.dumps(retStr,default=str)
@@ -769,7 +769,7 @@ def addDatasets2Cohort():
                     if checkDatasetCohortQuery.count() == 0:
                         db.session.add(Dataset2Cohort(DatasetID=dataset['datasetID'],CohortID=cohortID))
                     db.session.query(Dataset).filter(Dataset.DatasetID==dataset['datasetID']).update({'ActiveCohort':cohortID})
-                except:       
+                except:
                     updateSuccess=0
                     break
 
@@ -781,13 +781,13 @@ def addDatasets2Cohort():
                 db.session.rollback()
         else:
             db.session.rollback()
-        
-    return json.dumps(retStr,default=str) 
+
+    return json.dumps(retStr,default=str)
 
 @app.route('/insertNewSamplesintoDatabase',methods=["POST"])
 @login_required
 def insertNewSamplesintoDatabase():
-    
+
     sampleObj = {}
     today = dt.datetime.fromtimestamp(time.time()).strftime("%Y-%m-%d %H:%M:%S")
     retStr= {'Status': 'Error'}
@@ -798,7 +798,7 @@ def insertNewSamplesintoDatabase():
 
     if 'samples' in sampleObj:
         for index, sampleRecord in enumerate(sampleObj['samples']):
-            
+
             for field in sampleObj['samples'][index]:
                 sampleObj['samples'][index][field] = str(sampleObj['samples'][index][field]).rstrip()
             if checkSampleRecordValues(sampleRecord) == False:
@@ -815,14 +815,14 @@ def insertNewSamplesintoDatabase():
             else:
                 #remove trailing spaces here
                  sampleObj['samples'][index]['CohortName'] = sampleObj['samples'][index]['CohortName'].rstrip()
-            
+
             if 'Gender' not in sampleRecord or len(sampleRecord['Gender']) == 0:
-                sampleObj['samples'][index]['Gender'] = None    
+                sampleObj['samples'][index]['Gender'] = None
 
     success = 1
     if 'samples' in sampleObj:
-        for sampleRecord in sampleObj['samples']:      
-  
+        for sampleRecord in sampleObj['samples']:
+
             if famIDExists(sampleRecord['FamilyID']) == 0:
                 #insert familyID into database here.
                 try:
@@ -866,15 +866,15 @@ def updateSampleStatus():
         for sampleRecord in sampleObj['samples']:
             if checkSampleUpdateRecordValues(sampleRecord) == False:
                 return json.dumps({'Status': 'Error'},default=str)
- 
+
     success = 1
     if 'samples' in sampleObj:
-        for sampleRecord in sampleObj['samples']:      
+        for sampleRecord in sampleObj['samples']:
             try:
                 updateSampleStatusinDB(**sampleRecord,updateDate=today,userID=current_user.id)
             except:
                 success = 0
-                break       
+                break
 
     if success  == 1:
         #commit transaction here.
@@ -890,7 +890,7 @@ def updateSampleStatus():
 @app.route('/updateAnalysisFields',methods=["POST"])
 @login_required
 def updateAnalysisFields():
-    
+
     sampleObj = {}
     retStr= {'Status': 'Error'}
     if request.method == 'POST':
@@ -900,14 +900,14 @@ def updateAnalysisFields():
 
     success = 1
     if 'datasets' in sampleObj and 'updateTo' in sampleObj and 'field' in sampleObj:
-        for record in sampleObj['datasets']:      
-           
+        for record in sampleObj['datasets']:
+
             try:
                 if 'analysisID' in record:
                     db.session.query(Analysis).filter(Analysis.AnalysisID==record['analysisID']).update({sampleObj['field']: sampleObj['updateTo']})
             except:
                 success = 0
-                break       
+                break
     if success  == 1:
         #commit transaction here.
         try:
@@ -922,7 +922,7 @@ def updateAnalysisFields():
 @app.route('/updateSampleFields',methods=["POST"])
 @login_required
 def updateSampleFields():
-    
+
     sampleObj = {}
     retStr= {'Status': 'Error'}
     if request.method == 'POST':
@@ -932,21 +932,21 @@ def updateSampleFields():
 
     success = 1
     if 'samples' in sampleObj and 'updateTo' in sampleObj and 'field' in sampleObj:
-        for record in sampleObj['samples']:      
-           
+        for record in sampleObj['samples']:
+
             if 'sampleID' in record:
-                
+
                 if sampleObj['field']=='SampleID':
                     if SampleIDExists(sampleObj['updateTo']) == 1:
                         return json.dumps({'Status': 'New SampleID exists in database. SampleID is not updated.'},default=str)
-                    
+
 
                     oldFamID, oldSampleName = record['sampleID'].split("_",1)
                     newFamID, newSampleName = sampleObj['updateTo'].split("_",1)
                     if newFamID is None or newSampleName is None:
-                        return json.dumps(retStr,default=str)    
-                    
-                    # if new familyID doesnt exist - create it first.     
+                        return json.dumps(retStr,default=str)
+
+                    # if new familyID doesnt exist - create it first.
                     if famIDExists(newFamID) == 0:
                         try:
                             insertFamID(newFamID)
@@ -962,11 +962,11 @@ def updateSampleFields():
                     #then update sample's sample Name
                     if db.session.query(Sample).filter(Sample.SampleID==record['sampleID']).filter(Sample.SampleName==newSampleName).count() == 0:
                         try:
-                            db.session.query(Sample).filter(Sample.SampleID==record['sampleID']).update({'SampleName':newSampleName}) 
+                            db.session.query(Sample).filter(Sample.SampleID==record['sampleID']).update({'SampleName':newSampleName})
                         except:
                             success = 0
-                            break    
-                #update sample table regradless of the fields! 
+                            break
+                #update sample table regradless of the fields!
                 try:
                     db.session.query(Sample).filter(Sample.SampleID==record['sampleID']).update({sampleObj['field']: sampleObj['updateTo']})
                 except:
@@ -986,7 +986,7 @@ def updateSampleFields():
 @app.route('/updateCohortFields',methods=["POST"])
 @login_required
 def updateCohortFields():
-    
+
     cohortObj = {}
     retStr= {'Status': 'Error'}
     if request.method == 'POST':
@@ -1017,12 +1017,12 @@ def updateCohortFields():
 
 @app.errorhandler(CSRFError)
 def handle_csrf_error(e):
-    form = LoginForm() 
-    return render_template('Login.html',title="Login",error=e.description,form=form) 
+    form = LoginForm()
+    return render_template('Login.html',title="Login",error=e.description,form=form)
 
 @app.route('/logout')
 @login_required
 def logout():
- 
+
     logout_user()
     return redirect(url_for('login'))
