@@ -7,6 +7,7 @@ import Col from "react-bootstrap/lib/Col";
 import Checkbox from "react-bootstrap/lib/Checkbox";
 import FormControl from "react-bootstrap/lib/FormControl";
 import CreateUserModal from "./CreateUserModal";
+import UserRow from "./UserRow";
 
 export default class UserList extends React.Component {
     constructor(props) {
@@ -32,9 +33,21 @@ export default class UserList extends React.Component {
     }
     addUser(user) {
         this.setState({
-           userList: this.state.userList.concat(user)
+            userList: this.state.userList.concat(user)
         });
         this.hideAddingUser();
+    }
+    showUpdatingUser() {
+
+    }
+    hideUpdatingUser() {
+
+    }
+    showDeletingUser() {
+
+    }
+    hideDeletingUser() {
+
     }
     render() {
         return (
@@ -59,23 +72,7 @@ export default class UserList extends React.Component {
                             <Col xs={6}><h4>Change password</h4></Col>
                             <Col xs={2}><h4>Actions</h4></Col>
                         </Row>
-                        {this.state.userList.map(user => (
-                            <Row key={user.username} style={{paddingBottom: '0.25em'}}>
-                                <Col xs={1}>{user.username}</Col>
-                                <Col xs={2}>{user.email}</Col>
-                                <Col xs={1}><Checkbox inline defaultChecked={user.isAdmin}/></Col>
-                                <Col xs={3}>
-                                    <FormControl type="password" placeholder="New password" autoComplete="new-password"/>
-                                </Col>
-                                <Col xs={3}>
-                                    <FormControl type="password" placeholder="Confirm password" autoComplete="new-password"/>
-                                </Col>
-                                <Col xs={2}>
-                                    <Button bsStyle="primary" style={{marginRight: '0.25em'}}>Update</Button>
-                                    <Button bsStyle="danger">Delete</Button>
-                                </Col>
-                            </Row>
-                        ))}
+                        {this.state.userList.map(user => <UserRow {...user} />)}
                     </Grid>
                 </Panel.Body>
             </Panel>
