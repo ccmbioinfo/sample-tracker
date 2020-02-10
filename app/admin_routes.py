@@ -35,43 +35,53 @@ def validate(request_user: dict):
 	return False
 
 
-@app.route('/admin/users', methods=('POST', 'PUT'))
+@app.route('/admin/users', methods=['POST'])
 @login_required
-def create_update_user():
+def create_user():
 	if current_user.accessLevel != AccessLevel.Admin:
 		return abort(401)
 
 	rq_user = request.get_json()
-	if validate(rq_user):
-		db_user = User.query.filter_by(username=rq_user['username']).first()
-		if db_user is None:
-			return create_user(rq_user)
-		return update_user(db_user, rq_user)
-	else:
+	if not validate(rq_user):
 		return abort(400)
 
+	db_user = User.query.filter_by(username=rq_user['username']).first()
+	if db_user is not None:
+		return abort(403)
 
-def create_user(rq_user: dict):
-	if 'password' in rq_user and 'email' in rq_user:
-		role = AccessLevel.Admin if 'isAdmin' in rq_user and rq_user['isAdmin'] else AccessLevel.Regular
-		user = User(
-			username=rq_user['username'],
-			email=rq_user['email'],
-			password=generate_password_hash(rq_user['password']),
-			accessLevel=role
-		)
-		db.session.add(user)
-		try:
-			db.session.commit()
-			return Response(status=201)
-		except:
-			db.session.rollback()
-			return abort(500)
-	else:
+	if 'password' not in rq_user or 'email' not in rq_user:
 		return abort(400)
 
+	role = AccessLevel.Admin if 'isAdmin' in rq_user and rq_user['isAdmin'] else AccessLevel.Regular
+	user = User(
+		username=rq_user['username'],
+		email=rq_user['email'],
+		password=generate_password_hash(rq_user['password']),
+		accessLevel=role
+	)
+	db.session.add(user)
+	try:
+		db.session.commit()
+		return Response(status=201)
+	except:
+		db.session.rollback()
+		return abort(500)
 
-def update_user(db_user: User, rq_user: dict):
+
+@app.route('/admin/users', methods=['PUT'])
+@login_required
+def update_user():
+	if current_user.accessLevel != AccessLevel.Admin:
+		return abort(401)
+
+	rq_user = request.get_json()
+	if not validate(rq_user):
+		return abort(400)
+
+	db_user = User.query.filter_by(username=rq_user['username']).first()
+	if db_user is None:
+		return abort(400)
+
 	if 'password' in rq_user:
 		db_user.update({'password': generate_password_hash(rq_user['password'])})
 	if 'email' in rq_user:

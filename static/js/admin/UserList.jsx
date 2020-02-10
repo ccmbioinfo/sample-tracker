@@ -62,7 +62,7 @@ export default class UserList extends React.Component {
     }
     updateUser() {
         fetch("/admin/users", {
-            method: "POST",
+            method: "PUT",
             credentials: "same-origin",
             headers: {
                 "Content-Type": "application/json",

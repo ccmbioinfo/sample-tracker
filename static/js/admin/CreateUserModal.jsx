@@ -29,7 +29,7 @@ export default class CreateUserModal extends React.Component {
     submit(e) {
         e.preventDefault();
         fetch("/admin/users", {
-            method: "PUT",
+            method: "POST",
             credentials: "same-origin",
             headers: {
                 "Content-Type": "application/json",
