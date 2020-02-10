@@ -9,8 +9,8 @@ export default class UserRow extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            username: this.props.username,
-            email: this.props.email,
+            username: props.username,
+            email: props.email,
             isAdmin: !!props.isAdmin,
             password: props.password || "",
             confirmPassword: props.confirmPassword || ""

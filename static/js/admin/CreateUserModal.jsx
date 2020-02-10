@@ -59,7 +59,7 @@ export default class CreateUserModal extends React.Component {
                   {this.state.errorIntegrity && <Alert bsStyle="danger">User or email already exists.</Alert>}
                   <form onSubmit={this.submit}>
                       <FormGroup>
-                          <ControlLabel>Username</ControlLabel>
+                          <ControlLabel>Username (minimum 4 characters)</ControlLabel>
                           <FormControl
                               type="text" placeholder="minimum 4 characters" autoComplete="off" required
                               value={this.state.username}

@@ -105,7 +105,12 @@ export default class UserList extends React.Component {
             body: JSON.stringify(this.state.deletingUser)
         }).then(response => {
             if (response.ok) {
+                // Precondition: deletingUser is in userList
+                const index = this.state.userList.findIndex(user => user.username === this.state.deletingUser.username);
+                const userList = Array.from(this.state.userList);
+                userList.splice(index, 1);
                 this.setState({
+                    userList,
                     message: `Deleted ${this.state.deletingUser.username}.`,
                     messageStatus: "info"
                 });
