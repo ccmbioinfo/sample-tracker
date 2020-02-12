@@ -57,16 +57,6 @@ def resetpassword():
 	return render_template('PasswordReset.html', title="PasswordReset", error=errorStr, success=successStr, form=prForm)
 
 
-@app.route("/SearchBox")
-@app.route("/CohortStats")
-@app.route("/SampleUploader")
-@app.route("/GeneReports")
-@app.route("/admin")
-@login_required
-def redirect_to_index():
-	return redirect(url_for('index'))
-
-
 @app.route("/get_logged_user")
 @login_required
 def get_logged_user():
@@ -77,10 +67,22 @@ def get_logged_user():
 		return json.dumps(user_obj)
 
 
+@app.route("/SampleUploader")
+@app.route("/SearchBox")
+@app.route("/CohortStats")
 @app.route("/index")
 @login_required
 def index():
 	return render_template("index.html", username=current_user.username)
+
+
+@app.route("/GeneReports")
+@app.route("/admin")
+@login_required
+def admin_only_route():
+	if current_user.accessLevel != AccessLevel.Admin:
+		return redirect(url_for('index'))
+	return index()
 
 
 @app.route("/files/uploadTemplate")
