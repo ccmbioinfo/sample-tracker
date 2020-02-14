@@ -2,7 +2,6 @@ import json
 
 from flask import abort, Response, request
 from flask_login import current_user, login_required
-from werkzeug.security import generate_password_hash
 
 from app import app, db
 from app.models import User, AccessLevel
@@ -56,9 +55,9 @@ def create_user():
 	user = User(
 		username=rq_user['username'],
 		email=rq_user['email'],
-		password=generate_password_hash(rq_user['password']),
 		accessLevel=role
 	)
+	user.set_password(rq_user['password'])
 	db.session.add(user)
 	try:
 		db.session.commit()
@@ -80,7 +79,7 @@ def update_user():
 
 	db_user = User.query.filter_by(username=rq_user['username']).first_or_404()
 	if 'password' in rq_user and len(rq_user['password']):
-		db_user.password = generate_password_hash(rq_user['password'])
+		db_user.set_password(rq_user['password'])
 	if 'email' in rq_user:
 		db_user.email = rq_user['email']
 	if 'isAdmin' in rq_user:
