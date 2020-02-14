@@ -6,7 +6,6 @@ import time
 from flask import send_file, render_template, redirect, url_for, request
 from flask_login import login_user, logout_user, current_user, login_required
 from flask_wtf.csrf import CSRFError
-from werkzeug.security import generate_password_hash
 
 from app import app
 from app.loginform import LoginForm, PasswordResetForm
@@ -37,8 +36,7 @@ def resetpassword():
 	successStr = 0
 	prForm = PasswordResetForm()
 	if prForm.validate_on_submit():
-		user_obj = User.query.filter_by(username=prForm.username.data)
-		user = user_obj.first()
+		user = User.query.filter_by(username=prForm.username.data).first()
 		if user is None or not user.check_password(prForm.oldpassword.data):
 			errorStr = "Incorrect Username/old password."
 		else:
@@ -48,7 +46,7 @@ def resetpassword():
 				errorStr = "Old password and new passwords are the same!"
 			else:
 				try:
-					user_obj.update({'password': generate_password_hash(prForm.newpassword.data)})
+					user.set_password(prForm.newpassword.data)
 					db.session.commit()
 					successStr = "Password updated successfully!"
 				except:
