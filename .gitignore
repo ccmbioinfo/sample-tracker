@@ -4,7 +4,6 @@ __pycache__/
 gene_reports/
 static/dist/
 static/node_modules/
-static/js/HOST.jsx
 config.py
 *.pyc
 *.log
