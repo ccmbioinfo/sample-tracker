@@ -2,6 +2,7 @@ import datetime as dt
 import json
 import os
 import time
+from urllib.parse import urlparse
 
 from flask import send_file, render_template, redirect, url_for, request
 from flask_login import login_user, logout_user, current_user, login_required
@@ -12,20 +13,26 @@ from app.loginform import LoginForm, PasswordResetForm
 from app.non_route_functions import *
 
 
+def redirect_next_safe():
+	next_url = request.args.get('next')
+	if not next_url or urlparse(next_url).netloc != '':  # prevent spoofing
+		return redirect(url_for('index'))
+	return redirect(next_url)
+
+
 @app.route('/', methods=('GET', 'POST'))
 @app.route('/login', methods=('GET', 'POST'))
 def login():
 	if current_user.is_authenticated:
-		return redirect(url_for('index'))
+		return redirect_next_safe()
 
 	form = LoginForm()
 	if form.validate_on_submit():
 		user = User.query.filter_by(username=form.username.data).first()
 		if user is None or not user.check_password(form.password.data):
-			return render_template('Login.html', title="Login", error="Incorrect Username/Password combination",
-								   form=form)
+			return render_template('Login.html', title="Login", error="Incorrect username or password", form=form)
 		login_user(user)
-		return redirect(url_for('index'))
+		return redirect_next_safe()
 
 	return render_template('Login.html', title="Login", error=0, form=form)
 
