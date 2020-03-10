@@ -1,0 +1,28 @@
+version: '2'
+
+services:
+  mysql:
+    image: mysql:8.0
+    restart: always
+    environment:
+      MYSQL_DATABASE: "${MYSQL_DATABASE}"
+      MYSQL_USER: "${MYSQL_USER}"
+      MYSQL_PASSWORD: "${MYSQL_PASSWORD}"
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    ports:
+      - "3306:3306"
+    volumes:
+      - sample-tracker-mysql
+  flask:
+    build: .
+    image: ccmbio/sample-tracker
+    restart: always
+    ports:
+      - "5000:5000"
+    depends_on:
+      - mysql
+    environment:
+      FLASK_ENV: development
+    volumes:
+      - .:/var/www/sample-tracker
+    command: ./wait-for-it.sh mysql:3306 -- ./flask.sh
